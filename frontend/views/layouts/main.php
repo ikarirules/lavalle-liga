@@ -1,0 +1,147 @@
+<?php
+
+/** @var \yii\web\View $this */
+/** @var string $content */
+
+use common\widgets\Alert;
+use frontend\assets\AppAsset;
+use yii\bootstrap5\Breadcrumbs;
+use yii\bootstrap5\Html;
+use yii\bootstrap5\Nav;
+use yii\bootstrap5\NavBar;
+
+AppAsset::register($this);
+?>
+<?php $this->beginPage() ?>
+<!DOCTYPE html>
+<html lang="<?= Yii::$app->language ?>" class="h-100">
+<head>
+    <meta charset="<?= Yii::$app->charset ?>">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <?php $this->registerCsrfMetaTags() ?>
+    <title><?= Html::encode($this->title) ?></title>
+    <?php $this->head() ?>
+</head>
+<body class="d-flex flex-column h-100">
+<?php $this->beginBody() ?>
+
+<header>
+    <?php
+    $user = Yii::$app->user;
+
+    NavBar::begin([
+        'brandLabel' => '⚽ Liga del Deporte de Lavalle',
+        'brandUrl'   => Yii::$app->homeUrl,
+        'options'    => [
+            'class' => 'navbar navbar-expand-lg navbar-dark bg-dark fixed-top',
+        ],
+    ]);
+
+    $menuItems = [];
+
+    if (!$user->isGuest) {
+
+        // --- COMPETENCIA (todos los usuarios autenticados) ---
+        $menuItems[] = [
+            'label' => 'Torneos',
+            'url'   => ['/torneo/index'],
+        ];
+        $menuItems[] = [
+            'label' => 'Fechas',
+            'url'   => ['/fechas/index'],
+        ];
+        $menuItems[] = [
+            'label' => 'Partidos',
+            'url'   => ['/partidos/index'],
+        ];
+        $menuItems[] = [
+            'label' => 'Clubes',
+            'url'   => ['/club/index'],
+        ];
+
+        // --- ÁRBITROS (arbitro, miembro_liga, admin_liga) ---
+        if ($user->can('arbitro') || $user->can('miembro_liga') || $user->can('admin_liga')) {
+            $arbitrajeItems = [];
+            if ($user->can('arbitro') || $user->can('admin_liga')) {
+                $arbitrajeItems[] = ['label' => 'Cargar Informe',    'url' => ['/informe-arbitral/create']];
+            }
+            $arbitrajeItems[] = ['label' => 'Informes Arbitrales', 'url' => ['/informe-arbitral/index']];
+            $arbitrajeItems[] = ['label' => 'Detalle de Informes',  'url' => ['/informe-detalle/index']];
+            $arbitrajeItems[] = '<li><hr class="dropdown-divider"></li>';
+            $arbitrajeItems[] = ['label' => 'Tipos de Infracción',  'url' => ['/tipo-infraccion/index']];
+
+            $menuItems[] = [
+                'label' => 'Árbitros',
+                'items' => $arbitrajeItems,
+            ];
+        }
+
+        // --- ADMINISTRACIÓN (miembro_liga, admin_liga) ---
+        if ($user->can('miembro_liga') || $user->can('admin_liga')) {
+            $adminItems = [
+                ['label' => 'Gestionar Torneos', 'url' => ['/torneo/index']],
+                ['label' => 'Gestionar Fechas',  'url' => ['/fechas/index']],
+                ['label' => 'Gestionar Clubes',  'url' => ['/club/index']],
+            ];
+            if ($user->can('admin_liga')) {
+                $adminItems[] = '<li><hr class="dropdown-divider"></li>';
+                $adminItems[] = ['label' => 'Tipos de Infracción', 'url' => ['/tipo-infraccion/index']];
+            }
+            $menuItems[] = [
+                'label' => 'Administración',
+                'items' => $adminItems,
+            ];
+        }
+    }
+
+    echo Nav::widget([
+        'options'         => ['class' => 'navbar-nav me-auto mb-2 mb-lg-0'],
+        'items'           => $menuItems,
+        'activateParents' => true,
+    ]);
+
+    // --- LOGIN / LOGOUT ---
+    if ($user->isGuest) {
+        echo Html::tag(
+            'div',
+            Html::a('Registrarse', ['/site/signup'], ['class' => 'btn btn-outline-light me-2'])
+            . Html::a('Iniciar sesión', ['/site/login'], ['class' => 'btn btn-success']),
+            ['class' => 'd-flex gap-2']
+        );
+    } else {
+        $identity = $user->identity;
+        echo Html::tag(
+            'div',
+            Html::tag('span', '👤 ' . Html::encode($identity->username), ['class' => 'navbar-text me-3 text-white'])
+            . Html::beginForm(['/site/logout'], 'post')
+            . Html::submitButton('Cerrar sesión', ['class' => 'btn btn-outline-light btn-sm'])
+            . Html::endForm(),
+            ['class' => 'd-flex align-items-center']
+        );
+    }
+
+    NavBar::end();
+    ?>
+</header>
+
+<main role="main" class="flex-shrink-0">
+    <div class="container">
+        <?= Breadcrumbs::widget([
+            'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
+        ]) ?>
+        <?= Alert::widget() ?>
+        <?= $content ?>
+    </div>
+</main>
+
+<footer class="footer mt-auto py-3 bg-dark text-muted">
+    <div class="container d-flex justify-content-between">
+        <span class="text-white-50">&copy; <?= date('Y') ?> Liga del Deporte de Lavalle</span>
+        <span class="text-white-50"><?= Yii::powered() ?></span>
+    </div>
+</footer>
+
+<?php $this->endBody() ?>
+</body>
+</html>
+<?php $this->endPage();

@@ -1,0 +1,169 @@
+SISTEMA DE ROLES Y PERMISOS EN YII2 (RBAC)
+==========================================
+
+Yii2 tiene RBAC (Role-Based Access Control) incorporado.
+Guia completa para implementarlo en el proyecto lavalle-liga.
+
+
+----------------------------------------------------------
+1. CONFIGURAR EL COMPONENTE authManager
+----------------------------------------------------------
+
+Agrega esto en common/config/main.php:
+
+    'components' => [
+        'authManager' => [
+            'class' => 'yii\rbac\DbManager', // guarda roles en base de datos
+        ],
+        // ... resto de componentes
+    ],
+
+
+----------------------------------------------------------
+2. CREAR LAS TABLAS EN LA BASE DE DATOS
+----------------------------------------------------------
+
+Ejecuta las migraciones que incluye Yii2 por defecto:
+
+    php yii migrate --migrationPath=@yii/rbac/migrations
+
+Esto crea 4 tablas:
+    - auth_rule
+    - auth_item
+    - auth_item_child
+    - auth_assignment
+
+
+----------------------------------------------------------
+3. CREAR UN COMANDO DE CONSOLA PARA INICIALIZAR ROLES
+----------------------------------------------------------
+
+Crea el archivo: console/controllers/RbacController.php
+
+-------- CODIGO --------
+<?php
+namespace console\controllers;
+
+use yii\console\Controller;
+use Yii;
+
+class RbacController extends Controller
+{
+    public function actionInit()
+    {
+        $auth = Yii::$app->authManager;
+        $auth->removeAll(); // limpia todo antes de reinicializar
+
+        // --- PERMISOS ---
+        $verJugadores   = $auth->createPermission('verJugadores');
+        $verJugadores->description = 'Ver lista de jugadores';
+        $auth->add($verJugadores);
+
+        $editarJugadores = $auth->createPermission('editarJugadores');
+        $editarJugadores->description = 'Crear y editar jugadores';
+        $auth->add($editarJugadores);
+
+        $gestionarLiga  = $auth->createPermission('gestionarLiga');
+        $gestionarLiga->description = 'Administrar toda la liga';
+        $auth->add($gestionarLiga);
+
+        // --- ROLES ---
+        $espectador = $auth->createRole('espectador');
+        $auth->add($espectador);
+        $auth->addChild($espectador, $verJugadores);
+
+        $entrenador = $auth->createRole('entrenador');
+        $auth->add($entrenador);
+        $auth->addChild($entrenador, $verJugadores);
+        $auth->addChild($entrenador, $editarJugadores);
+
+        $admin = $auth->createRole('admin');
+        $auth->add($admin);
+        $auth->addChild($admin, $entrenador);      // hereda permisos de entrenador
+        $auth->addChild($admin, $gestionarLiga);
+
+        // Asignar rol admin al usuario con ID 1
+        $auth->assign($admin, 1);
+
+        echo "RBAC inicializado correctamente.\n";
+    }
+}
+------------------------
+
+Ejecuta con:
+    php yii rbac/init
+
+
+----------------------------------------------------------
+4. VERIFICAR PERMISOS EN CONTROLLERS
+----------------------------------------------------------
+
+Opcion A - verificacion manual en una accion:
+
+    if (!\Yii::$app->user->can('editarJugadores')) {
+        throw new \yii\web\ForbiddenHttpException('Sin acceso.');
+    }
+
+Opcion B - usando behaviors() en el controller:
+
+    public function behaviors()
+    {
+        return [
+            'access' => [
+                'class' => \yii\filters\AccessControl::class,
+                'rules' => [
+                    [
+                        'actions' => ['index', 'view'],
+                        'allow' => true,
+                        'roles' => ['espectador'],
+                    ],
+                    [
+                        'actions' => ['create', 'update'],
+                        'allow' => true,
+                        'roles' => ['entrenador'],
+                    ],
+                    [
+                        'actions' => ['delete'],
+                        'allow' => true,
+                        'roles' => ['admin'],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+
+----------------------------------------------------------
+5. ASIGNAR ROL AL REGISTRAR UN USUARIO
+----------------------------------------------------------
+
+En el modelo User o en el formulario de registro:
+
+    $auth = Yii::$app->authManager;
+    $role = $auth->getRole('espectador');
+    $auth->assign($role, $user->id);
+
+
+----------------------------------------------------------
+ESTRUCTURA DE HERENCIA DE ROLES
+----------------------------------------------------------
+
+admin
+ |-- entrenador
+ |    |-- verJugadores
+ |    |-- editarJugadores
+ |-- gestionarLiga
+
+espectador
+ |-- verJugadores
+
+
+----------------------------------------------------------
+PASOS A SEGUIR EN ORDEN
+----------------------------------------------------------
+
+1. Configurar authManager en common/config/main.php
+2. Ejecutar: php yii migrate --migrationPath=@yii/rbac/migrations
+3. Crear console/controllers/RbacController.php con roles y permisos
+4. Ejecutar: php yii rbac/init
+5. Proteger controladores con AccessControl o Yii::$app->user->can()

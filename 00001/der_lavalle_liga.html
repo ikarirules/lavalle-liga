@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>DER – Liga del Deporte de Lavalle</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f4f6f9;
+    color: #222;
+    padding: 30px;
+  }
+  header {
+    background: #1a3a5c;
+    color: white;
+    padding: 24px 32px;
+    border-radius: 8px;
+    margin-bottom: 28px;
+  }
+  header h1 { font-size: 22px; font-weight: 700; }
+  header p  { font-size: 13px; margin-top: 6px; opacity: 0.8; }
+
+  .diagram-box {
+    background: white;
+    border-radius: 8px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 28px;
+    overflow-x: auto;
+  }
+  .diagram-box h2 {
+    font-size: 15px;
+    color: #1a3a5c;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e0e6ef;
+    padding-bottom: 8px;
+  }
+
+  .relations {
+    background: white;
+    border-radius: 8px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 28px;
+  }
+  .relations h2 {
+    font-size: 15px;
+    color: #1a3a5c;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #e0e6ef;
+    padding-bottom: 8px;
+  }
+  .relations table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .relations th {
+    background: #1a3a5c;
+    color: white;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+  .relations td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #e8ecf2;
+  }
+  .relations tr:nth-child(even) td { background: #f7f9fc; }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag-n  { background: #e3f0ff; color: #1a5cac; }
+  .tag-1  { background: #e6f9ee; color: #1a7a3c; }
+
+  .tables-section {
+    background: white;
+    border-radius: 8px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .tables-section h2 {
+    font-size: 15px;
+    color: #1a3a5c;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e0e6ef;
+    padding-bottom: 8px;
+  }
+  .table-card {
+    margin-bottom: 24px;
+    border: 1px solid #dde3ed;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .table-card-header {
+    background: #1a3a5c;
+    color: white;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .table-card table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .table-card th {
+    background: #e8edf5;
+    color: #333;
+    padding: 6px 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+  .table-card td {
+    padding: 5px 12px;
+    border-bottom: 1px solid #eef1f6;
+  }
+  .table-card tr:last-child td { border-bottom: none; }
+  .pk  { color: #b5600a; font-weight: 700; }
+  .fk  { color: #1a5cac; }
+  .col-type { color: #666; font-style: italic; }
+
+  footer {
+    text-align: center;
+    font-size: 11px;
+    color: #999;
+    margin-top: 20px;
+  }
+
+  @media print {
+    body { background: white; padding: 10px; }
+    .diagram-box, .relations, .tables-section { box-shadow: none; border: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>DER – Sistema de Gestión · Liga del Deporte de Lavalle</h1>
+  <p>Diagrama de Entidad-Relación (relaciones lógicas) · Generado: 2026-04-04 · v2.0 (+ torneo)</p>
+</header>
+
+<!-- DIAGRAMA MERMAID -->
+<div class="diagram-box">
+  <h2>Diagrama de Entidad-Relación</h2>
+  <div class="mermaid">
+erDiagram
+    USER {
+        int id PK
+        string username
+        string email
+        string tipo
+        int club_id FK
+        int status
+        int created_at
+        int updated_at
+    }
+    CLUB {
+        int id PK
+        string nombre
+        string razon_social
+        string cuit_cuil
+        string zona
+        string direccion
+        string telefono
+        string email
+        string presidente
+        string estadio
+        int anio_fundacion
+        string logo
+        string instagram
+        string facebook
+        string color_primario
+        string color_secundario
+        tinyint activo
+        int created_at
+        int updated_at
+    }
+    TORNEO {
+        int id PK
+        string nombre
+        smallint anio
+        date fecha_inicio
+        date fecha_fin
+        tinyint activo
+        int created_by FK
+        int updated_by FK
+        int created_at
+        int updated_at
+    }
+    FECHAS {
+        int id PK
+        int numero_fecha
+        int torneo_id FK
+        datetime fecha_programada
+        datetime fecha_reprogramada_1
+        datetime fecha_reprogramada_2
+        date fecha_jugada
+        int club_local_id FK
+        int club_visitante_id FK
+        int arbitro_id FK
+        text observaciones
+        int created_by FK
+        int updated_by FK
+        int created_at
+        int updated_at
+    }
+    PARTIDOS {
+        int id PK
+        int fecha_id FK
+        string categoria
+        int club_local_id FK
+        int club_visitante_id FK
+        string cancha
+        enum estado
+        tinyint goles_local
+        tinyint goles_visitante
+        int created_by FK
+        int updated_by FK
+        int created_at
+        int updated_at
+    }
+    INFORME_ARBITRAL {
+        int id PK
+        int partido_id FK
+        int arbitro_id FK
+        int asistente_id FK
+        text observaciones
+        int created_by FK
+        int updated_by FK
+        int created_at
+        int updated_at
+    }
+    INFORME_DETALLE {
+        int id PK
+        int informe_id FK
+        tinyint minuto
+        int jugador_id FK
+        tinyint numero_camiseta
+        int club_id FK
+        int tipo_infraccion_id FK
+        int created_at
+        int updated_at
+    }
+    TIPO_INFRACCION {
+        int id PK
+        string nombre
+        text descripcion
+        string sancion_descripcion
+        tinyint sancion_fechas_min
+        tinyint sancion_fechas_max
+    }
+
+    FECHAS }o--o| TORNEO : "torneo_id"
+    USER }o--o| CLUB : "pertenece a (club_id)"
+    FECHAS }o--|| CLUB : "club_local_id"
+    FECHAS }o--|| CLUB : "club_visitante_id"
+    FECHAS }o--o| USER : "arbitro_id"
+    PARTIDOS }o--|| FECHAS : "fecha_id"
+    PARTIDOS }o--|| CLUB : "club_local_id"
+    PARTIDOS }o--|| CLUB : "club_visitante_id"
+    INFORME_ARBITRAL ||--|| PARTIDOS : "partido_id"
+    INFORME_ARBITRAL }o--|| USER : "arbitro_id"
+    INFORME_DETALLE }o--|| INFORME_ARBITRAL : "informe_id"
+    INFORME_DETALLE }o--|| TIPO_INFRACCION : "tipo_infraccion_id"
+    INFORME_DETALLE }o--o| USER : "jugador_id"
+    INFORME_DETALLE }o--|| CLUB : "club_id"
+  </div>
+</div>
+
+<!-- TABLA DE RELACIONES -->
+<div class="relations">
+  <h2>Relaciones Lógicas entre Tablas</h2>
+  <table>
+    <tr>
+      <th>Tabla origen</th>
+      <th>Campo</th>
+      <th>Referencia</th>
+      <th>Cardinalidad</th>
+      <th>Descripción</th>
+    </tr>
+    <tr><td>user</td><td>club_id</td><td>club.id</td><td><span class="tag tag-n">N:1</span></td><td>El usuario pertenece a un club</td></tr>
+    <tr><td>fechas</td><td>torneo_id</td><td>torneo.id</td><td><span class="tag tag-n">N:1</span></td><td>Torneo al que pertenece la jornada</td></tr>
+    <tr><td>fechas</td><td>club_local_id</td><td>club.id</td><td><span class="tag tag-n">N:1</span></td><td>Club que juega de local en la jornada</td></tr>
+    <tr><td>fechas</td><td>club_visitante_id</td><td>club.id</td><td><span class="tag tag-n">N:1</span></td><td>Club visitante en la jornada</td></tr>
+    <tr><td>fechas</td><td>arbitro_id</td><td>user.id</td><td><span class="tag tag-n">N:1</span></td><td>Árbitro asignado a la jornada</td></tr>
+    <tr><td>fechas</td><td>created_by / updated_by</td><td>user.id</td><td><span class="tag tag-n">N:1</span></td><td>Auditoría de usuario</td></tr>
+    <tr><td>partidos</td><td>fecha_id</td><td>fechas.id</td><td><span class="tag tag-n">N:1</span></td><td>El partido pertenece a una jornada</td></tr>
+    <tr><td>partidos</td><td>club_local_id</td><td>club.id</td><td><span class="tag tag-n">N:1</span></td><td>Club local del partido</td></tr>
+    <tr><td>partidos</td><td>club_visitante_id</td><td>club.id</td><td><span class="tag tag-n">N:1</span></td><td>Club visitante del partido</td></tr>
+    <tr><td>partidos</td><td>created_by / updated_by</td><td>user.id</td><td><span class="tag tag-n">N:1</span></td><td>Auditoría de usuario</td></tr>
+    <tr><td>informe_arbitral</td><td>partido_id</td><td>partidos.id</td><td><span class="tag tag-1">1:1</span></td><td>Un partido tiene un único informe</td></tr>
+    <tr><td>informe_arbitral</td><td>arbitro_id</td><td>user.id</td><td><span class="tag tag-n">N:1</span></td><td>Árbitro que firma el informe</td></tr>
+    <tr><td>informe_arbitral</td><td>asistente_id</td><td>user.id</td><td><span class="tag tag-n">N:1</span></td><td>Asistente que firma el informe</td></tr>
+    <tr><td>informe_arbitral</td><td>created_by / updated_by</td><td>user.id</td><td><span class="tag tag-n">N:1</span></td><td>Auditoría de usuario</td></tr>
+    <tr><td>informe_detalle</td><td>informe_id</td><td>informe_arbitral.id</td><td><span class="tag tag-n">N:1</span></td><td>Cada línea pertenece a un informe</td></tr>
+    <tr><td>informe_detalle</td><td>tipo_infraccion_id</td><td>tipo_infraccion.id</td><td><span class="tag tag-n">N:1</span></td><td>Tipo de infracción cometida</td></tr>
+    <tr><td>informe_detalle</td><td>jugador_id</td><td>user.id</td><td><span class="tag tag-n">N:1</span></td><td>Jugador infraccionado</td></tr>
+    <tr><td>informe_detalle</td><td>club_id</td><td>club.id</td><td><span class="tag tag-n">N:1</span></td><td>Club del jugador infraccionado</td></tr>
+  </table>
+</div>
+
+<!-- DEFINICIÓN DE TABLAS -->
+<div class="tables-section">
+  <h2>Definición de Tablas</h2>
+
+  <div class="table-card">
+    <div class="table-card-header">USER</div>
+    <table>
+      <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+      <tr><td class="pk">id</td><td class="col-type">INT</td><td>PK autoincremental</td></tr>
+      <tr><td>username</td><td class="col-type">VARCHAR(255)</td><td>NOT NULL UNIQUE</td></tr>
+      <tr><td>auth_key</td><td class="col-type">VARCHAR(32)</td><td>NOT NULL</td></tr>
+      <tr><td>password_hash</td><td class="col-type">VARCHAR(255)</td><td>NOT NULL</td></tr>
+      <tr><td>email</td><td class="col-type">VARCHAR(255)</td><td>NOT NULL UNIQUE</td></tr>
+      <tr><td class="fk">tipo</td><td class="col-type">VARCHAR(20)</td><td>jugador | arbitro | directivo | miembro_liga | admin_liga</td></tr>
+      <tr><td class="fk">club_id</td><td class="col-type">INT</td><td>FK lógica → club.id (NULL si no aplica)</td></tr>
+      <tr><td>status</td><td class="col-type">SMALLINT</td><td>10=activo</td></tr>
+      <tr><td>created_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+      <tr><td>updated_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+      <tr><td>verification_token</td><td class="col-type">VARCHAR(255)</td><td>NULL</td></tr>
+    </table>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-header">CLUB</div>
+    <table>
+      <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+      <tr><td class="pk">id</td><td class="col-type">INT</td><td>PK autoincremental</td></tr>
+      <tr><td>nombre</td><td class="col-type">VARCHAR(100)</td><td>NOT NULL</td></tr>
+      <tr><td>razon_social</td><td class="col-type">VARCHAR(150)</td><td>NOT NULL</td></tr>
+      <tr><td>cuit_cuil</td><td class="col-type">VARCHAR(13)</td><td>NOT NULL UNIQUE</td></tr>
+      <tr><td>zona</td><td class="col-type">VARCHAR(100)</td><td>NOT NULL</td></tr>
+      <tr><td>direccion</td><td class="col-type">VARCHAR(200)</td><td>NULL</td></tr>
+      <tr><td>telefono</td><td class="col-type">VARCHAR(20)</td><td>NULL</td></tr>
+      <tr><td>email</td><td class="col-type">VARCHAR(100)</td><td>NULL</td></tr>
+      <tr><td>presidente</td><td class="col-type">VARCHAR(100)</td><td>NULL</td></tr>
+      <tr><td>estadio</td><td class="col-type">VARCHAR(100)</td><td>NULL</td></tr>
+      <tr><td>anio_fundacion</td><td class="col-type">SMALLINT</td><td>NULL</td></tr>
+      <tr><td>logo</td><td class="col-type">VARCHAR(255)</td><td>Ruta de imagen</td></tr>
+      <tr><td>instagram</td><td class="col-type">VARCHAR(100)</td><td>NULL</td></tr>
+      <tr><td>facebook</td><td class="col-type">VARCHAR(100)</td><td>NULL</td></tr>
+      <tr><td>color_primario</td><td class="col-type">VARCHAR(7)</td><td>Hex ej: #FF0000</td></tr>
+      <tr><td>color_secundario</td><td class="col-type">VARCHAR(7)</td><td>Hex ej: #FFFFFF</td></tr>
+      <tr><td>activo</td><td class="col-type">TINYINT(1)</td><td>DEFAULT 1</td></tr>
+      <tr><td>created_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+      <tr><td>updated_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+    </table>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-header">TORNEO</div>
+    <table>
+      <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+      <tr><td class="pk">id</td><td class="col-type">INT</td><td>PK autoincremental</td></tr>
+      <tr><td>nombre</td><td class="col-type">VARCHAR(100)</td><td>NOT NULL – Ej: Apertura 2025</td></tr>
+      <tr><td>anio</td><td class="col-type">SMALLINT</td><td>NOT NULL</td></tr>
+      <tr><td>fecha_inicio</td><td class="col-type">DATE</td><td>NULL</td></tr>
+      <tr><td>fecha_fin</td><td class="col-type">DATE</td><td>NULL</td></tr>
+      <tr><td>activo</td><td class="col-type">TINYINT(1)</td><td>DEFAULT 1</td></tr>
+      <tr><td class="fk">created_by</td><td class="col-type">INT</td><td>FK lógica → user.id</td></tr>
+      <tr><td class="fk">updated_by</td><td class="col-type">INT</td><td>FK lógica → user.id</td></tr>
+      <tr><td>created_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+      <tr><td>updated_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+    </table>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-header">FECHAS</div>
+    <table>
+      <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+      <tr><td class="pk">id</td><td class="col-type">INT</td><td>PK autoincremental</td></tr>
+      <tr><td>numero_fecha</td><td class="col-type">INT</td><td>NOT NULL – Nro de jornada</td></tr>
+      <tr><td class="fk">torneo_id</td><td class="col-type">INT</td><td>FK lógica → torneo.id (NULL)</td></tr>
+      <tr><td>fecha_programada</td><td class="col-type">DATETIME</td><td>NOT NULL</td></tr>
+      <tr><td>fecha_reprogramada_1</td><td class="col-type">DATETIME</td><td>NULL</td></tr>
+      <tr><td>fecha_reprogramada_2</td><td class="col-type">DATETIME</td><td>NULL</td></tr>
+      <tr><td>fecha_jugada</td><td class="col-type">DATE</td><td>NULL – Día efectivo</td></tr>
+      <tr><td class="fk">club_local_id</td><td class="col-type">INT</td><td>FK lógica → club.id</td></tr>
+      <tr><td class="fk">club_visitante_id</td><td class="col-type">INT</td><td>FK lógica → club.id</td></tr>
+      <tr><td class="fk">arbitro_id</td><td class="col-type">INT</td><td>FK lógica → user.id</td></tr>
+      <tr><td>observaciones</td><td class="col-type">TEXT</td><td>NULL</td></tr>
+      <tr><td class="fk">created_by</td><td class="col-type">INT</td><td>FK lógica → user.id</td></tr>
+      <tr><td class="fk">updated_by</td><td class="col-type">INT</td><td>FK lógica → user.id</td></tr>
+      <tr><td>created_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+      <tr><td>updated_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+    </table>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-header">PARTIDOS</div>
+    <table>
+      <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+      <tr><td class="pk">id</td><td class="col-type">INT</td><td>PK autoincremental</td></tr>
+      <tr><td class="fk">fecha_id</td><td class="col-type">INT</td><td>FK lógica → fechas.id</td></tr>
+      <tr><td>categoria</td><td class="col-type">VARCHAR(50)</td><td>NOT NULL – Ej: Primera, Sub-17</td></tr>
+      <tr><td class="fk">club_local_id</td><td class="col-type">INT</td><td>FK lógica → club.id</td></tr>
+      <tr><td class="fk">club_visitante_id</td><td class="col-type">INT</td><td>FK lógica → club.id</td></tr>
+      <tr><td>cancha</td><td class="col-type">VARCHAR(100)</td><td>NULL – Puede ser neutral</td></tr>
+      <tr><td>estado</td><td class="col-type">ENUM</td><td>programada | suspendida | postergada | jugada</td></tr>
+      <tr><td>goles_local</td><td class="col-type">TINYINT</td><td>NULL</td></tr>
+      <tr><td>goles_visitante</td><td class="col-type">TINYINT</td><td>NULL</td></tr>
+      <tr><td class="fk">created_by</td><td class="col-type">INT</td><td>FK lógica → user.id</td></tr>
+      <tr><td class="fk">updated_by</td><td class="col-type">INT</td><td>FK lógica → user.id</td></tr>
+      <tr><td>created_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+      <tr><td>updated_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+    </table>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-header">TIPO_INFRACCION</div>
+    <table>
+      <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+      <tr><td class="pk">id</td><td class="col-type">INT</td><td>PK autoincremental</td></tr>
+      <tr><td>nombre</td><td class="col-type">VARCHAR(100)</td><td>NOT NULL</td></tr>
+      <tr><td>descripcion</td><td class="col-type">TEXT</td><td>NULL</td></tr>
+      <tr><td>sancion_descripcion</td><td class="col-type">VARCHAR(100)</td><td>NULL – Texto orientativo</td></tr>
+      <tr><td>sancion_fechas_min</td><td class="col-type">TINYINT</td><td>NULL – Mínimo de fechas</td></tr>
+      <tr><td>sancion_fechas_max</td><td class="col-type">TINYINT</td><td>NULL – Máximo de fechas</td></tr>
+    </table>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-header">INFORME_ARBITRAL</div>
+    <table>
+      <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+      <tr><td class="pk">id</td><td class="col-type">INT</td><td>PK autoincremental</td></tr>
+      <tr><td class="fk">partido_id</td><td class="col-type">INT</td><td>FK lógica → partidos.id (1:1)</td></tr>
+      <tr><td class="fk">arbitro_id</td><td class="col-type">INT</td><td>FK lógica → user.id</td></tr>
+      <tr><td class="fk">asistente_id</td><td class="col-type">INT</td><td>FK lógica → user.id (NULL)</td></tr>
+      <tr><td>observaciones</td><td class="col-type">TEXT</td><td>NULL</td></tr>
+      <tr><td class="fk">created_by</td><td class="col-type">INT</td><td>FK lógica → user.id</td></tr>
+      <tr><td class="fk">updated_by</td><td class="col-type">INT</td><td>FK lógica → user.id</td></tr>
+      <tr><td>created_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+      <tr><td>updated_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+    </table>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-header">INFORME_DETALLE</div>
+    <table>
+      <tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr>
+      <tr><td class="pk">id</td><td class="col-type">INT</td><td>PK autoincremental</td></tr>
+      <tr><td class="fk">informe_id</td><td class="col-type">INT</td><td>FK lógica → informe_arbitral.id</td></tr>
+      <tr><td>minuto</td><td class="col-type">TINYINT</td><td>NULL – Minuto del partido</td></tr>
+      <tr><td class="fk">jugador_id</td><td class="col-type">INT</td><td>FK lógica → user.id</td></tr>
+      <tr><td>numero_camiseta</td><td class="col-type">TINYINT</td><td>NULL</td></tr>
+      <tr><td class="fk">club_id</td><td class="col-type">INT</td><td>FK lógica → club.id</td></tr>
+      <tr><td class="fk">tipo_infraccion_id</td><td class="col-type">INT</td><td>FK lógica → tipo_infraccion.id</td></tr>
+      <tr><td>created_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+      <tr><td>updated_at</td><td class="col-type">INT</td><td>Timestamp Unix</td></tr>
+    </table>
+  </div>
+
+</div>
+
+<footer>
+  Liga del Deporte de Lavalle · Sistema de Gestión · DER v2.0 · 2026-04-04
+</footer>
+
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'default', er: { diagramPadding: 30 } });
+</script>
+</body>
+</html>
