@@ -11,6 +11,8 @@ return [
     'id' => 'app-frontend',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
+    'language' => 'es',
+    'sourceLanguage' => 'en-US',
     'controllerNamespace' => 'frontend\controllers',
     'components' => [
         'request' => [

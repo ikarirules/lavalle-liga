@@ -2,10 +2,15 @@
 
 namespace frontend\controllers;
 
+use common\models\Club;
 use common\models\Fechas;
+use common\models\Torneo;
+use common\models\User;
 use frontend\models\FechasSearch;
+use yii\helpers\ArrayHelper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
+use yii\web\Response;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 
@@ -36,6 +41,11 @@ class FechasController extends Controller
                             'actions' => ['delete'],
                             'allow' => true,
                             'roles' => ['admin_liga'],
+                        ],
+                        [
+                            'actions' => ['arbitros'],
+                            'allow' => true,
+                            'roles' => ['miembro_liga', 'admin_liga'],
                         ],
                     ],
                 ],
@@ -95,8 +105,13 @@ class FechasController extends Controller
             $model->loadDefaultValues();
         }
 
+        $torneos = ArrayHelper::map(Torneo::find()->where(['activo' => 1])->all(), 'id', 'nombre');
+        $clubes  = ArrayHelper::map(Club::find()->where(['activo' => 1])->orderBy('nombre')->all(), 'id', 'nombre');
+
         return $this->render('create', [
-            'model' => $model,
+            'model'   => $model,
+            'torneos' => $torneos,
+            'clubes'  => $clubes,
         ]);
     }
 
@@ -115,8 +130,13 @@ class FechasController extends Controller
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
+        $torneos = ArrayHelper::map(Torneo::find()->where(['activo' => 1])->all(), 'id', 'nombre');
+        $clubes  = ArrayHelper::map(Club::find()->where(['activo' => 1])->orderBy('nombre')->all(), 'id', 'nombre');
+
         return $this->render('update', [
-            'model' => $model,
+            'model'   => $model,
+            'torneos' => $torneos,
+            'clubes'  => $clubes,
         ]);
     }
 
@@ -141,6 +161,46 @@ class FechasController extends Controller
      * @return Fechas the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
+    /**
+     * Busca árbitros por username (mínimo 3 letras) — responde JSON para Select2.
+     * GET /fechas/arbitros?q=rom
+     */
+    public function actionArbitros()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+        $q = trim(\Yii::$app->request->get('q', ''));
+
+        if (mb_strlen($q) < 3) {
+            return ['results' => []];
+        }
+
+        $users = User::find()
+            ->innerJoin('auth_assignment aa', 'aa.user_id = {{%user}}.id')
+            ->where(['aa.item_name' => 'arbitro'])
+            ->andWhere(['like', '{{%user}}.username', $q])
+            ->andWhere(['{{%user}}.status' => User::STATUS_ACTIVE])
+            ->limit(20)
+            ->all();
+
+        return ['results' => array_map(fn($u) => ['id' => $u->id, 'text' => $u->username], $users)];
+    }
+
+    /**
+     * Devuelve todos los árbitros activos para precargar el select en update.
+     */
+    private function getArbitros()
+    {
+        return ArrayHelper::map(
+            User::find()
+                ->innerJoin('auth_assignment aa', 'aa.user_id = {{%user}}.id')
+                ->where(['aa.item_name' => 'arbitro'])
+                ->andWhere(['{{%user}}.status' => User::STATUS_ACTIVE])
+                ->all(),
+            'id',
+            'username'
+        );
+    }
+
     protected function findModel($id)
     {
         if (($model = Fechas::findOne(['id' => $id])) !== null) {

@@ -89,4 +89,52 @@ class RbacController extends Controller
 
         echo "RBAC inicializado correctamente.\n";
     }
+
+    /**
+     * Asigna un rol a un usuario.
+     * Uso: php yii rbac/assign <user_id> <rol>
+     * Ejemplo: php yii rbac/assign 2 arbitro
+     */
+    public function actionAssign($userId, $role)
+    {
+        $auth = Yii::$app->authManager;
+
+        $roleObj = $auth->getRole($role);
+        if (!$roleObj) {
+            echo "Error: el rol '$role' no existe.\n";
+            echo "Roles disponibles: jugador, arbitro, directivo, miembro_liga, admin_liga\n";
+            return 1;
+        }
+
+        $user = \common\models\User::findOne($userId);
+        if (!$user) {
+            echo "Error: no existe un usuario con ID $userId.\n";
+            return 1;
+        }
+
+        // Quitar asignaciones previas
+        $auth->revokeAll($userId);
+
+        $auth->assign($roleObj, $userId);
+        echo "Rol '$role' asignado a {$user->username} (ID: $userId).\n";
+    }
+
+    /**
+     * Muestra todos los usuarios con sus roles asignados.
+     * Uso: php yii rbac/list
+     */
+    public function actionList()
+    {
+        $users = \common\models\User::find()->all();
+        $auth  = Yii::$app->authManager;
+
+        echo str_pad('ID', 6) . str_pad('Usuario', 25) . "Rol\n";
+        echo str_repeat('-', 50) . "\n";
+
+        foreach ($users as $user) {
+            $roles = $auth->getRolesByUser($user->id);
+            $roleNames = $roles ? implode(', ', array_keys($roles)) : '(sin rol)';
+            echo str_pad($user->id, 6) . str_pad($user->username, 25) . $roleNames . "\n";
+        }
+    }
 }

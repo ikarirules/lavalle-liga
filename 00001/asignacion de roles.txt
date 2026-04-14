@@ -1,0 +1,65 @@
+====================================================
+  CREAR USUARIOS Y ASIGNAR ROLES / PERMISOS
+====================================================
+
+PASO 1 — Correr las migraciones (una sola vez)
+------------------------------------------------
+  php yii migrate
+
+Crea las tablas de usuarios y las tablas de RBAC
+(auth_item, auth_assignment, etc.).
+
+
+PASO 2 — Inicializar roles y permisos (una sola vez)
+------------------------------------------------------
+  php yii rbac/init
+
+Crea todos los roles y asigna automaticamente
+admin_liga al usuario con ID 1.
+
+
+PASO 3 — Crear el primer usuario (admin)
+-----------------------------------------
+Registrarse en la web: /site/signup
+El primer usuario tendra ID 1 y quedara como admin_liga.
+
+Si ya corriste rbac/init antes de registrarte,
+asignale el rol manualmente con el Paso 4.
+
+
+PASO 4 — Asignar rol a un usuario existente
+--------------------------------------------
+Opcion A — Comando de consola:
+
+  php yii rbac/assign <user_id> <rol>
+  Ejemplo: php yii rbac/assign 2 arbitro
+
+Opcion B — SQL directo en phpMyAdmin:
+
+  INSERT INTO auth_assignment (item_name, user_id, created_at)
+  VALUES ('admin_liga', 1, UNIX_TIMESTAMP());
+
+
+ROLES DISPONIBLES
+------------------
+  jugador      -> Solo ver jugadores y clubes
+  arbitro      -> Ver jugadores, clubes y arbitros
+  directivo    -> Gestionar jugadores de su club
+  miembro_liga -> Gestionar arbitros y clubes
+  admin_liga   -> Acceso total
+
+
+VER USUARIOS Y SUS ROLES
+--------------------------
+  php yii rbac/list
+
+
+RESUMEN DEL FLUJO NORMAL
+--------------------------
+  1. php yii migrate              <- una sola vez
+  2. php yii rbac/init            <- una sola vez
+  3. Registrarse en /site/signup  <- primer usuario = admin
+  4. Resto de usuarios se registran y se les asigna
+     rol con: php yii rbac/assign <id> <rol>
+
+====================================================

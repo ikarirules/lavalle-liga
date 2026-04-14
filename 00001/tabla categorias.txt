@@ -1,0 +1,11 @@
+veteranos  	bf
+senior     	bf
++50		bf
+femenino
+reserva
+quinta
+cuarta
+septima		bf	
+octava		bf
+primera
+directivo

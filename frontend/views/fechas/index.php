@@ -29,10 +29,23 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 
-            'id',
             'numero_fecha',
-            'torneo_id',
+            [
+                'attribute' => 'torneo_id',
+                'label'     => 'Torneo',
+                'value'     => fn($model) => $model->torneo?->nombre ?? '-',
+            ],
             'fecha_programada',
+            [
+                'attribute' => 'club_local_id',
+                'label'     => 'Club Local',
+                'value'     => fn($model) => $model->clubLocal?->nombre ?? '-',
+            ],
+            [
+                'attribute' => 'club_visitante_id',
+                'label'     => 'Club Visitante',
+                'value'     => fn($model) => $model->clubVisitante?->nombre ?? '-',
+            ],
             'fecha_reprogramada_1',
             //'fecha_reprogramada_2',
             //'fecha_jugada',
