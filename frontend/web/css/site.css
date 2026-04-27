@@ -1,6 +1,6 @@
 main > .container, main > .container-fluid
 {
-    padding: 70px 15px 20px;
+    padding: 80px 15px 20px;
 }
 
 .footer {
@@ -100,4 +100,23 @@ a.desc:after {
 .breadcrumb-item > a
 {
     text-decoration: none;
+}
+
+/* navbar: texto visible en fondo oscuro */
+.navbar-dark .navbar-nav .nav-link,
+.navbar-dark .navbar-nav .nav-link.dropdown-toggle {
+    color: rgba(255, 255, 255, 0.85);
+}
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link:focus {
+    color: #ffffff;
+}
+
+/* dropdown menu: texto oscuro sobre fondo blanco */
+.navbar .dropdown-menu .dropdown-item {
+    color: #212529;
+}
+.navbar .dropdown-menu .dropdown-item:hover {
+    background-color: #f8f9fa;
+    color: #16181b;
 }

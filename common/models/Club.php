@@ -86,6 +86,11 @@ class Club extends \yii\db\ActiveRecord
     }
 
     // Relaciones
+    public function getJugadores()
+    {
+        return $this->hasMany(Jugador::class, ['club_id' => 'id']);
+    }
+
     public function getUsers()
     {
         return $this->hasMany(User::class, ['club_id' => 'id']);

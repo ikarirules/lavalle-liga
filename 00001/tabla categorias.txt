@@ -1,11 +1,13 @@
-veteranos  	bf
-senior     	bf
-+50		bf
-femenino
-reserva
-quinta
-cuarta
-septima		bf	
-octava		bf
-primera
+las fechas de las cat. se modifica en 1ro de julio de cada año
+
+veteranos  	bf     	82-90 
+senior     	bf	75-81
++50		bf	hasta-74
+femenino		libre
+reserva			libre
+quinta			2008-2010
+cuarta			2002-2007
+septima		bf	2011-2013
+octava		bf	2014- infinito
+primera			libre
 directivo

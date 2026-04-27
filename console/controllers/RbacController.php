@@ -49,13 +49,11 @@ class RbacController extends Controller
         $auth->addChild($jugador, $verJugadores);
         $auth->addChild($jugador, $verClubes);
 
-        // Arbitro: independiente de club
+        // Arbitro: solo puede ver jugadores, cargar partidos y crear informes
         $arbitro = $auth->createRole('arbitro');
         $arbitro->description = 'Arbitro de la liga';
         $auth->add($arbitro);
         $auth->addChild($arbitro, $verJugadores);
-        $auth->addChild($arbitro, $verClubes);
-        $auth->addChild($arbitro, $verArbitros);
 
         // Directivo: gestiona jugadores de su club
         $directivo = $auth->createRole('directivo');
@@ -65,11 +63,12 @@ class RbacController extends Controller
         $auth->addChild($directivo, $editarJugadores);
         $auth->addChild($directivo, $verClubes);
 
-        // Miembro de la liga: gestiona arbitros y clubes
+        // Miembro de la liga: gestiona arbitros, clubes y cualquier jugador
         $miembroLiga = $auth->createRole('miembro_liga');
         $miembroLiga->description = 'Miembro de la liga (independiente de club)';
         $auth->add($miembroLiga);
         $auth->addChild($miembroLiga, $verJugadores);
+        $auth->addChild($miembroLiga, $editarJugadores);
         $auth->addChild($miembroLiga, $verArbitros);
         $auth->addChild($miembroLiga, $editarArbitros);
         $auth->addChild($miembroLiga, $verClubes);

@@ -32,10 +32,10 @@ AppAsset::register($this);
     $user = Yii::$app->user;
 
     NavBar::begin([
-        'brandLabel' => '⚽ Liga del Deporte de Lavalle',
+        'brandLabel' => '⚽ Liga',
         'brandUrl'   => Yii::$app->homeUrl,
         'options'    => [
-            'class' => 'navbar navbar-expand-lg navbar-dark bg-dark fixed-top',
+            'class' => 'navbar navbar-expand-xl navbar-dark bg-dark fixed-top',
         ],
     ]);
 
@@ -44,55 +44,24 @@ AppAsset::register($this);
     if (!$user->isGuest) {
 
         // --- COMPETENCIA (todos los usuarios autenticados) ---
-        $menuItems[] = [
-            'label' => 'Torneos',
-            'url'   => ['/torneo/index'],
-        ];
-        $menuItems[] = [
-            'label' => 'Fechas',
-            'url'   => ['/fechas/index'],
-        ];
-        $menuItems[] = [
-            'label' => 'Partidos',
-            'url'   => ['/partidos/index'],
-        ];
-        $menuItems[] = [
-            'label' => 'Clubes',
-            'url'   => ['/club/index'],
-        ];
+        $menuItems[] = ['label' => 'Torneos',   'url' => ['/torneo/index']];
+        $menuItems[] = ['label' => 'Fechas',    'url' => ['/fechas/index']];
+        $menuItems[] = ['label' => 'Partidos',  'url' => ['/partidos/index']];
+        $menuItems[] = ['label' => 'Clubes',    'url' => ['/club/index']];
+        $menuItems[] = ['label' => 'Jugadores', 'url' => ['/jugador/index']];
 
-        // --- ÁRBITROS (arbitro, miembro_liga, admin_liga) ---
         if ($user->can('arbitro') || $user->can('miembro_liga') || $user->can('admin_liga')) {
-            $arbitrajeItems = [];
             if ($user->can('arbitro') || $user->can('admin_liga')) {
-                $arbitrajeItems[] = ['label' => 'Cargar Informe',    'url' => ['/informe-arbitral/create']];
+                $menuItems[] = ['label' => 'Nuevo Inf.', 'url' => ['/informe-arbitral/create']];
             }
-            $arbitrajeItems[] = ['label' => 'Informes Arbitrales', 'url' => ['/informe-arbitral/index']];
-            $arbitrajeItems[] = ['label' => 'Detalle de Informes',  'url' => ['/informe-detalle/index']];
-            $arbitrajeItems[] = '<li><hr class="dropdown-divider"></li>';
-            $arbitrajeItems[] = ['label' => 'Tipos de Infracción',  'url' => ['/tipo-infraccion/index']];
-
-            $menuItems[] = [
-                'label' => 'Árbitros',
-                'items' => $arbitrajeItems,
-            ];
+            $menuItems[] = ['label' => 'Informes', 'url' => ['/informe-arbitral/index']];
         }
 
-        // --- ADMINISTRACIÓN (miembro_liga, admin_liga) ---
         if ($user->can('miembro_liga') || $user->can('admin_liga')) {
-            $adminItems = [
-                ['label' => 'Gestionar Torneos', 'url' => ['/torneo/index']],
-                ['label' => 'Gestionar Fechas',  'url' => ['/fechas/index']],
-                ['label' => 'Gestionar Clubes',  'url' => ['/club/index']],
-            ];
-            if ($user->can('admin_liga')) {
-                $adminItems[] = '<li><hr class="dropdown-divider"></li>';
-                $adminItems[] = ['label' => 'Tipos de Infracción', 'url' => ['/tipo-infraccion/index']];
-            }
-            $menuItems[] = [
-                'label' => 'Administración',
-                'items' => $adminItems,
-            ];
+            $menuItems[] = ['label' => 'Categorías', 'url' => ['/categoria/index']];
+        }
+        if ($user->can('admin_liga')) {
+            $menuItems[] = ['label' => 'Infracciones', 'url' => ['/tipo-infraccion/index']];
         }
     }
 
@@ -138,7 +107,7 @@ AppAsset::register($this);
 
 <footer class="footer mt-auto py-3 bg-dark text-muted">
     <div class="container d-flex justify-content-between">
-        <span class="text-white-50">&copy; <?= date('Y') ?> Liga del Deporte de Lavalle</span>
+        <span class="text-white-50">&copy; <?= date('Y') ?> Liga</span>
         <span class="text-white-50"><?= Yii::powered() ?></span>
     </div>
 </footer>

@@ -1,0 +1,353 @@
+====================================================
+  BITÁCORA DE DESARROLLO — 14/04/2026
+====================================================
+
+CONTEXTO
+--------
+Sistema de gestión para ligas de fútbol amateur.
+Stack: Yii2 Advanced, Bootstrap 5, MySQL (WAMP).
+El proyecto ya tenía: User, Club, Fechas, Partidos,
+InformeArbitral, InformeDetalle, TipoInfraccion, Torneo.
+
+
+----------------------------------------------------
+1. TABLA JUGADOR (nueva, separada de user)
+----------------------------------------------------
+- Los jugadores NO son usuarios del sistema (no logean).
+- Los gestiona el directivo de su club o el miembro_liga.
+- Migración: m260414_120000_create_jugador_table.php
+
+Columnas:
+  id, nombre, dni (unique), categoria_id (FK),
+  club_id (FK), numero_carnet, foto_carnet,
+  numero_fecha_suspension, cant_fechas_suspension,
+  created_at, updated_at
+
+Lógica de suspensión (NO se guarda en BD):
+  - getSuspendido() es un getter virtual en Jugador.php
+  - Cruza numero_fecha_suspension + cant_fechas_suspension
+    con la tabla fechas para calcular si sigue suspendido.
+  - Si la ronda aún no está cargada o sin fecha → suspendido.
+  - Respeta reprogramaciones (fecha_reprogramada_2 > 1 > programada).
+  - Las suspensiones son GENERALES (no por torneo).
+
+Foto de carnet:
+  - Se sube al servidor: frontend/web/uploads/carnets/
+  - Se guarda solo el nombre del archivo en foto_carnet.
+  - Método uploadFoto() en el model maneja el proceso.
+  - getFotoUrl() devuelve la URL pública.
+  - Máx. 2MB, formatos: jpg, jpeg, png, webp.
+
+Migración de datos desde user:
+  - m260414_130000_migrate_jugadores_from_user.php
+  - Toma usuarios con rol 'jugador' de auth_assignment.
+  - nombre = username, dni = TEMP-{id} (completar luego),
+    categoria_id = Primera por defecto.
+  - Los TEMP- se identifican fácil para completar desde el CRUD.
+
+
+----------------------------------------------------
+2. TABLA CATEGORIA (nueva)
+----------------------------------------------------
+- Migración: m260414_140000_create_categoria_table.php
+- Reemplaza el array estático que había en Jugador::getCategorias().
+
+Categorías y flag permite_bf (Buena Fe):
+  Primera, Reserva, Cuarta, Quinta, Femenino → permite_bf = 0
+  Séptima, Octava, Sénior, Veteranos, +50    → permite_bf = 1
+  Directivo                                   → permite_bf = 0
+
+Lógica de Buena Fe:
+  - Jugadores "bf" NO están en el sistema (no tienen carnet).
+  - El flag permite_bf se togglea por categoría cuando cambia
+    el torneo (los torneos no se superponen).
+  - Lo gestiona miembro_liga o admin_liga desde /categoria/index.
+
+FK: jugador.categoria_id → categoria.id
+  - Migración: m260414_140001_change_jugador_categoria_to_fk.php
+  - Convirtió categoria_id de string a INT.
+
+
+----------------------------------------------------
+3. RBAC — CAMBIOS
+----------------------------------------------------
+- miembro_liga ahora tiene permiso editarJugadores.
+  Puede editar jugadores de CUALQUIER club.
+- directivo puede editar solo jugadores de SU club
+  (filtro por club_id en controller y search).
+- La distinción directivo vs miembro_liga se hace en:
+    JugadorController::isDirectivoDeClub()
+
+Recordar correr después de cambios en RBAC:
+  php yii rbac/init
+
+
+----------------------------------------------------
+4. ARCHIVOS CREADOS/MODIFICADOS
+----------------------------------------------------
+Migraciones (correr en orden con php yii migrate):
+  m260414_120000_create_jugador_table.php
+  m260414_130000_migrate_jugadores_from_user.php
+  m260414_140000_create_categoria_table.php
+  m260414_140001_change_jugador_categoria_to_fk.php
+  m260414_150000_add_carnet_to_jugador.php
+
+Models:
+  common/models/Jugador.php       (nuevo)
+  common/models/Categoria.php     (nuevo)
+  common/models/Club.php          (agregado getJugadores())
+
+Controllers:
+  frontend/controllers/JugadorController.php   (nuevo)
+  frontend/controllers/CategoriaController.php (nuevo)
+
+Search models:
+  frontend/models/JugadorSearch.php  (nuevo)
+
+Vistas:
+  frontend/views/jugador/   (index, view, create, update, _form)
+  frontend/views/categoria/ (index, update)
+
+Layout:
+  frontend/views/layouts/main.php
+    - Brand cambiado a "⚽ Liga"
+    - navbar-expand-lg → navbar-expand-xl
+    - Menú sin dropdowns (links directos por rol)
+    - Agregados: Jugadores, Categorías, Informes
+
+Assets:
+  frontend/assets/AppAsset.php
+    - Agregado BootstrapPluginAsset (JS de Bootstrap 5)
+
+CSS:
+  frontend/web/css/site.css
+    - padding-top ajustado a 80px
+    - Fixes de color para navbar-dark y dropdown-menu
+
+RBAC:
+  console/controllers/RbacController.php
+    - miembro_liga recibe editarJugadores
+
+
+----------------------------------------------------
+5. PENDIENTE / A CONSULTAR
+----------------------------------------------------
+- QR por jugador: pendiente para más adelante.
+  Idea: apunta a /jugador/carnet/{id}, requiere login.
+  Librería sugerida: chillerlan/php-qrcode (composer).
+
+- Completar datos migrados desde user:
+  Buscar dni LIKE 'TEMP-%' en la tabla jugador
+  y completar nombre real, DNI y categoría.
+
+- Confirmar con la liga si las suspensiones pueden
+  ser por torneo en el futuro (hoy son generales/anuales).
+
+- Subir fotos de carnet: están digitalizadas,
+  se suben desde el form de edición del jugador.
+
+
+====================================================
+  BITÁCORA DE DESARROLLO — 23/04/2026
+====================================================
+
+CONTEXTO
+--------
+Continuación del sprint anterior. Se agregaron campos de
+fecha de nacimiento al jugador y rangos de edad a las
+categorías, con lógica de auto-asignación en el formulario.
+
+
+----------------------------------------------------
+6. FECHA DE NACIMIENTO EN JUGADOR
+----------------------------------------------------
+- Columna: fecha_nacimiento DATE NULL, después de dni.
+- Migración: m260423_100000_add_fecha_nacimiento_to_jugador.php
+
+Model (common/models/Jugador.php):
+  - Nueva @property string|null $fecha_nacimiento
+  - Rule: date 'php:Y-m-d', default null
+  - Label: 'Fecha de Nacimiento'
+
+Vistas:
+  - jugador/_form.php: input type="date" después del DNI
+  - jugador/view.php:  atributo 'fecha_nacimiento:date'
+  - jugador/index.php: columna 'F. Nacimiento' con format 'date'
+
+Search (frontend/models/JugadorSearch.php):
+  - fecha_nacimiento agregado como campo 'safe'
+    para permitir filtrado futuro.
+
+
+----------------------------------------------------
+7. RANGOS DE EDAD EN CATEGORÍA
+----------------------------------------------------
+- Columnas: fecha_desde DATE NULL, fecha_hasta DATE NULL
+  (se agregan después de 'activo').
+- Migración: m260423_100001_add_fechas_to_categoria.php
+
+Semántica:
+  - Representan el rango de nacimiento habilitado
+    para esa categoría.
+  - Formato típico: YYYY-07-01 hasta YYYY-06-30
+    (año deportivo julio–junio), pero son editables.
+  - NULL en ambos campos = sin restricción de edad
+    (selección manual obligatoria).
+
+Model (common/models/Categoria.php):
+  - Nuevas @property string|null $fecha_desde / $fecha_hasta
+  - Rules: date 'php:Y-m-d', default null
+  - Labels: 'Nacidos desde' / 'Nacidos hasta'
+  - Nuevo método estático findByFechaNacimiento($fecha):
+      Busca la categoría activa cuyo rango incluye la fecha.
+      Filtra solo registros con ambas fechas NOT NULL.
+      Devuelve null si no hay match.
+
+Vistas:
+  - categoria/update.php: fieldset "Rango de nacimiento"
+      con dos inputs date y nota explicativa del formato típico.
+  - categoria/index.php: columnas "Nacidos desde" / "Nacidos hasta"
+      formateadas con Yii::$app->formatter->asDate().
+
+
+----------------------------------------------------
+8. AUTO-ASIGNACIÓN DE CATEGORÍA EN FORMULARIO JUGADOR
+----------------------------------------------------
+Vista: frontend/views/jugador/_form.php
+
+Lógica JS (client-side, sin AJAX):
+  - Al cargar la vista se serializa como JSON el array de
+    todas las categorías activas con sus fechas (id, nombre,
+    fecha_desde, fecha_hasta).
+  - Al cambiar fecha_nacimiento se itera el array buscando
+    la primera categoría cuyo rango incluya la fecha
+    (comparación de strings ISO 'YYYY-MM-DD', válida).
+  - Si hay match: auto-selecciona el dropdown y muestra
+    mensaje verde "✓ Categoría asignada automáticamente: X".
+  - Si no hay match: muestra mensaje gris
+    "Ninguna categoría coincide — seleccioná manualmente".
+  - Al editar un jugador con fecha ya cargada, la lógica
+    se ejecuta al cargar la página (onload).
+  - El dropdown SIEMPRE queda editable; la auto-selección
+    es una sugerencia, no un bloqueo.
+
+Nota: Categoria::findByFechaNacimiento() queda disponible
+  para validaciones server-side futuras si se necesita
+  cruzar categoría asignada vs. fecha de nacimiento.
+
+
+----------------------------------------------------
+9. MIGRACIONES DEL 23/04 (correr en orden)
+----------------------------------------------------
+  m260423_100000_add_fecha_nacimiento_to_jugador.php
+  m260423_100001_add_fechas_to_categoria.php
+
+Comando: php yii migrate
+
+
+----------------------------------------------------
+10. PENDIENTE / A CONSULTAR (actualizado)
+----------------------------------------------------
+- Configurar rangos de fecha en cada categoría desde
+  /categoria/index (editar cada una).
+
+- Validación server-side: cruzar fecha_nacimiento del
+  jugador con el rango de su categoría asignada y advertir
+  si no coincide (hoy solo se avisa en el frontend).
+
+- QR por jugador: pendiente para más adelante.
+
+- Completar datos migrados desde user:
+  Buscar dni LIKE 'TEMP-%' y completar nombre, DNI,
+  categoría y fecha de nacimiento.
+
+- Confirmar si las suspensiones pueden ser por torneo
+  en el futuro (hoy son generales/anuales).
+
+- Subir fotos de carnet desde el form de edición.
+
+====================================================
+
+====================================================
+  BITÁCORA DE DESARROLLO — 26/04/2026
+====================================================
+
+CONTEXTO
+--------
+Agregado campo "club del pase" al jugador y ajuste
+de permisos del rol árbitro.
+
+
+----------------------------------------------------
+11. CLUB DEL PASE EN JUGADOR
+----------------------------------------------------
+- Columna: club_pase_id INT NULL, FK a club.id
+  (ON DELETE SET NULL).
+- Migración: m260426_100000_add_club_pase_to_jugador.php
+
+Model (common/models/Jugador.php):
+  - Nueva @property int|null $club_pase_id
+  - Rules: integer, default null, exist skipOnEmpty
+    (es opcional: el jugador puede o no tener pase).
+  - Label: 'Club del Pase'
+  - Relación: getClubPase() → hasOne Club
+
+Vistas:
+  - jugador/_form.php: dropdown después del campo Club,
+    con prompt "Sin pase (ninguno)" y hint explicativo.
+    Lo ven todos los roles (directivo incluido).
+  - jugador/index.php: columna 'Pase' muestra nombre
+    del club via $model->clubPase->nombre, con filtro.
+  - jugador/view.php: fila 'Club del Pase' en DetailView.
+
+
+----------------------------------------------------
+12. AJUSTE DE PERMISOS — ROL ÁRBITRO
+----------------------------------------------------
+Cambios en RbacController.php y PartidosController.php.
+
+Rol árbitro — antes:
+  verJugadores, verClubes, verArbitros
+
+Rol árbitro — ahora:
+  verJugadores (solo esto en RBAC)
+  + cargar partidos (create/update en PartidosController)
+  + crear/editar informe arbitral (ya estaba permitido)
+
+Detalle:
+  - Se quitaron verClubes y verArbitros del rol arbitro
+    en RbacController::actionInit().
+  - Se agregó 'arbitro' a la regla create/update de
+    PartidosController (antes solo directivo/miembro_liga/admin).
+  - InformeArbitralController ya tenía arbitro en
+    create/update/view → sin cambios.
+
+Usuario pepito (ID: 25) asignado como árbitro:
+  php yii rbac/init
+  php yii rbac/assign 25 arbitro
+
+Recordar: rbac/init borra todas las asignaciones.
+  Después hay que reasignar roles no-admin manualmente.
+
+
+----------------------------------------------------
+13. PENDIENTE / A CONSULTAR (actualizado)
+----------------------------------------------------
+- Configurar rangos de fecha en cada categoría desde
+  /categoria/index (editar cada una).
+
+- Validación server-side: cruzar fecha_nacimiento del
+  jugador con el rango de su categoría asignada.
+
+- QR por jugador: pendiente para más adelante.
+
+- Completar datos migrados desde user:
+  Buscar dni LIKE 'TEMP-%' y completar nombre, DNI,
+  categoría y fecha de nacimiento.
+
+- Confirmar si las suspensiones pueden ser por torneo
+  en el futuro (hoy son generales/anuales).
+
+- Subir fotos de carnet desde el form de edición.
+
+====================================================
