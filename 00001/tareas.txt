@@ -1,0 +1,10 @@
+- cambiar fechas desde el 1ro de enero.
+- listas de jugadores por partido 
+- descarga de exel de las listas de jugadores 
+- creacion de listas de buena fe...  y finales
+---------------------------------------------------
+-los dt deberiar estar en la cabecera de la lista.
+-crear una tabla puntos para saber los puntos por club y categoria.
+- poder colocar un jugador a la lista de otra categoria
+
+

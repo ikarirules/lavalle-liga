@@ -2,12 +2,17 @@
 
 namespace frontend\controllers;
 
+use common\models\Categoria;
+use common\models\Fechas;
 use common\models\Partidos;
+use common\models\User;
 use frontend\models\PartidosSearch;
+use yii\helpers\ArrayHelper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
+use Yii;
 
 /**
  * PartidosController implements the CRUD actions for Partidos model.
@@ -93,10 +98,20 @@ class PartidosController extends Controller
             }
         } else {
             $model->loadDefaultValues();
+            if (Yii::$app->user->can('arbitro')) {
+                $model->arbitro = Yii::$app->user->identity->username;
+            }
         }
 
+        [$fechasOptions, $fechasData, $isArbitro, $arbitros, $categorias] = $this->getFormData();
+
         return $this->render('create', [
-            'model' => $model,
+            'model'         => $model,
+            'fechasOptions' => $fechasOptions,
+            'fechasData'    => $fechasData,
+            'isArbitro'     => $isArbitro,
+            'arbitros'      => $arbitros,
+            'categorias'    => $categorias,
         ]);
     }
 
@@ -115,8 +130,15 @@ class PartidosController extends Controller
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
+        [$fechasOptions, $fechasData, $isArbitro, $arbitros, $categorias] = $this->getFormData();
+
         return $this->render('update', [
-            'model' => $model,
+            'model'         => $model,
+            'fechasOptions' => $fechasOptions,
+            'fechasData'    => $fechasData,
+            'isArbitro'     => $isArbitro,
+            'arbitros'      => $arbitros,
+            'categorias'    => $categorias,
         ]);
     }
 
@@ -141,6 +163,58 @@ class PartidosController extends Controller
      * @return Partidos the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
+    private function getFormData(): array
+    {
+        $categorias = ArrayHelper::map(
+            Categoria::find()->where(['activo' => 1])->orderBy('nombre')->all(),
+            'nombre',
+            'nombre'
+        );
+
+        $isArbitro = Yii::$app->user->can('arbitro');
+
+        $fechasList = Fechas::find()
+            ->with(['clubLocal', 'clubVisitante'])
+            ->orderBy(['fecha_programada' => SORT_ASC])
+            ->all();
+
+        $fechasOptions = [];
+        $fechasData    = [];
+        foreach ($fechasList as $fecha) {
+            $local      = $fecha->clubLocal     ? $fecha->clubLocal->nombre     : '?';
+            $visitante  = $fecha->clubVisitante ? $fecha->clubVisitante->nombre : '?';
+            $fechaLabel = 'Fecha #' . $fecha->numero_fecha . ' — '
+                . Yii::$app->formatter->asDate($fecha->fecha_programada, 'dd/MM/yyyy')
+                . ' | ' . $local . ' vs ' . $visitante;
+            $fechasOptions[$fecha->id] = $fechaLabel;
+            $fechasData[$fecha->id] = [
+                'fecha_programada'    => $fecha->fecha_programada
+                    ? Yii::$app->formatter->asDatetime($fecha->fecha_programada, 'dd/MM/yyyy HH:mm')
+                    : '',
+                'club_local_id'       => $fecha->club_local_id,
+                'club_local_nombre'   => $fecha->clubLocal ? $fecha->clubLocal->nombre : '',
+                'club_visitante_id'   => $fecha->club_visitante_id,
+                'club_visitante_nombre' => $fecha->clubVisitante ? $fecha->clubVisitante->nombre : '',
+            ];
+        }
+
+        $arbitros = [];
+        if (!$isArbitro) {
+            $arbitros = ArrayHelper::map(
+                User::find()
+                    ->innerJoin('auth_assignment aa', 'aa.user_id = {{%user}}.id')
+                    ->where(['aa.item_name' => 'arbitro'])
+                    ->andWhere(['{{%user}}.status' => User::STATUS_ACTIVE])
+                    ->orderBy('{{%user}}.username')
+                    ->all(),
+                'username',
+                'username'
+            );
+        }
+
+        return [$fechasOptions, $fechasData, $isArbitro, $arbitros, $categorias];
+    }
+
     protected function findModel($id)
     {
         if (($model = Partidos::findOne(['id' => $id])) !== null) {

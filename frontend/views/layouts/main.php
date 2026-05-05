@@ -50,6 +50,10 @@ AppAsset::register($this);
         $menuItems[] = ['label' => 'Clubes',    'url' => ['/club/index']];
         $menuItems[] = ['label' => 'Jugadores', 'url' => ['/jugador/index']];
 
+        if ($user->can('arbitro') || $user->can('directivo') || $user->can('miembro_liga') || $user->can('admin_liga')) {
+            $menuItems[] = ['label' => 'Listas', 'url' => ['/lista-jugadores/index']];
+        }
+
         if ($user->can('arbitro') || $user->can('miembro_liga') || $user->can('admin_liga')) {
             if ($user->can('arbitro') || $user->can('admin_liga')) {
                 $menuItems[] = ['label' => 'Nuevo Inf.', 'url' => ['/informe-arbitral/create']];

@@ -17,8 +17,8 @@ class PartidosSearch extends Partidos
     public function rules()
     {
         return [
-            [['id', 'fecha_id', 'club_local_id', 'club_visitante_id', 'goles_local', 'goles_visitante', 'created_by', 'updated_by', 'created_at', 'updated_at'], 'integer'],
-            [['categoria', 'cancha', 'estado'], 'safe'],
+            [['id', 'fecha_id', 'club_local_id', 'club_visitante_id', 'created_by', 'updated_by', 'created_at', 'updated_at'], 'integer'],
+            [['categoria', 'cancha', 'estado', 'arbitro', 'asistente1', 'asistente2', 'asistente3'], 'safe'],
         ];
     }
 
@@ -63,8 +63,6 @@ class PartidosSearch extends Partidos
             'fecha_id' => $this->fecha_id,
             'club_local_id' => $this->club_local_id,
             'club_visitante_id' => $this->club_visitante_id,
-            'goles_local' => $this->goles_local,
-            'goles_visitante' => $this->goles_visitante,
             'created_by' => $this->created_by,
             'updated_by' => $this->updated_by,
             'created_at' => $this->created_at,
@@ -73,7 +71,11 @@ class PartidosSearch extends Partidos
 
         $query->andFilterWhere(['like', 'categoria', $this->categoria])
             ->andFilterWhere(['like', 'cancha', $this->cancha])
-            ->andFilterWhere(['like', 'estado', $this->estado]);
+            ->andFilterWhere(['like', 'estado', $this->estado])
+            ->andFilterWhere(['like', 'arbitro', $this->arbitro])
+            ->andFilterWhere(['like', 'asistente1', $this->asistente1])
+            ->andFilterWhere(['like', 'asistente2', $this->asistente2])
+            ->andFilterWhere(['like', 'asistente3', $this->asistente3]);
 
         return $dataProvider;
     }

@@ -16,11 +16,12 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
-        <?= Html::a('Delete', ['delete', 'id' => $model->id], [
+        <?= Html::a('Editar', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
+        <?= Html::a('Lista de Jugadores', ['/lista-jugadores/lista-partido', 'partido_id' => $model->id], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Eliminar', ['delete', 'id' => $model->id], [
             'class' => 'btn btn-danger',
             'data' => [
-                'confirm' => 'Are you sure you want to delete this item?',
+                'confirm' => '¿Eliminar este partido?',
                 'method' => 'post',
             ],
         ]) ?>
@@ -36,8 +37,10 @@ $this->params['breadcrumbs'][] = $this->title;
             'club_visitante_id',
             'cancha',
             'estado',
-            'goles_local',
-            'goles_visitante',
+            'arbitro',
+            'asistente1',
+            'asistente2',
+            'asistente3',
             'created_by',
             'updated_by',
             'created_at',

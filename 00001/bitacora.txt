@@ -351,3 +351,171 @@ Recordar: rbac/init borra todas las asignaciones.
 - Subir fotos de carnet desde el form de edición.
 
 ====================================================
+
+====================================================
+  BITÁCORA DE DESARROLLO — 03/05/2026
+====================================================
+
+CONTEXTO
+--------
+Se trabajó sobre el módulo de partidos (columnas,
+formulario de carga) y se creó desde cero el módulo
+de listas de jugadores por partido.
+
+
+----------------------------------------------------
+14. TABLA PARTIDOS — CAMBIO DE COLUMNAS
+----------------------------------------------------
+Se quitaron: goles_local, goles_visitante.
+Se agregaron: arbitro, asistente1, asistente2,
+              asistente3 (VARCHAR 100, nullable).
+
+Migración nueva (tabla ya existente):
+  m260503_120000_alter_partidos_table.php
+
+Migración original también actualizada:
+  m260403_174401_create_partidos_table.php
+
+Archivos PHP modificados:
+  common/models/Partidos.php
+    - @property, rules(), attributeLabels() actualizados
+  frontend/models/PartidosSearch.php
+    - rules() y filtros actualizados
+  frontend/views/partidos/_form.php
+  frontend/views/partidos/view.php
+
+Comando para aplicar: php yii migrate
+
+
+----------------------------------------------------
+15. FORMULARIO PARTIDOS — MEJORAS DE UX
+----------------------------------------------------
+frontend/controllers/PartidosController.php:
+  - Nuevo método privado getFormData() centraliza
+    la preparación de datos para create y update.
+  - Carga: fechas (con clubs eager-loaded), árbitros,
+    categorías activas.
+  - Si el logueado tiene rol 'arbitro' → pre-llena
+    $model->arbitro con su username (GET).
+
+frontend/views/partidos/_form.php:
+
+  FECHA:
+    - Dropdown en lugar de textInput.
+    - Muestra: "Fecha #N — dd/mm/yyyy | Local vs Visit."
+    - Al elegir → JS auto-llena Fecha Programada (readonly),
+      Club Local y Club Visitante (hidden inputs + display).
+    - Datos de fechas pasados como JSON desde el controller.
+
+  CATEGORÍA:
+    - Dropdown de categorías activas (nombre → nombre).
+
+  ÁRBITRO:
+    - Si logueado es árbitro → campo readonly pre-llenado.
+    - Si no → dropdown con todos los árbitros activos.
+      (filtrado via auth_assignment WHERE item_name='arbitro')
+
+  Eliminados del form:
+    - created_by, updated_by, created_at, updated_at
+      (los maneja BlameableBehavior/TimestampBehavior).
+
+frontend/views/partidos/create.php y update.php:
+  - Pasan las variables extra a _form.php.
+  - Títulos traducidos al español.
+
+
+----------------------------------------------------
+16. MÓDULO LISTA DE JUGADORES — NUEVO
+----------------------------------------------------
+
+TABLA lista_jugadores:
+  id, tipo_lista ENUM('buena_fe','partido'),
+  partido_id INT NULL (FK partidos),
+  club_id INT (FK club — identifica el lado local/visit.),
+  jugador_id INT (FK jugador),
+  remera TINYINT UNSIGNED NULL
+    (0 = DT, 1-99 = número, NULL = sin asignar),
+  created_by, updated_by, created_at, updated_at
+
+Migraciones:
+  m260503_140000_create_lista_jugadores_table.php
+    (creación inicial con remera_local / remera_visitante)
+  m260503_150000_alter_lista_jugadores_remera.php
+    (reemplaza las dos columnas por una sola: remera)
+
+Índice único: (partido_id, club_id, jugador_id)
+  → evita duplicados en la misma lista.
+
+Archivos creados:
+  common/models/ListaJugadores.php
+    - optsRemera(): array '—', 1-99, 'DT' (valor 0)
+    - displayRemera(): texto legible del número
+  frontend/models/ListaJugadoresSearch.php
+  frontend/controllers/ListaJugadoresController.php
+  frontend/views/lista-jugadores/
+    index.php, create.php, update.php, view.php,
+    _form.php, lista-partido.php
+
+ACCIONES DEL CONTROLADOR:
+
+  lista-partido (GET ?partido_id=X)
+    Vista pareada 4 columnas: jugador local | remera |
+    jugador visitante | remera. Encabezado azul (local)
+    y gris (visitante). Muestra Fecha #N en el título.
+
+  update-remera (POST AJAX)
+    Actualiza remera de un entry sin recargar página.
+    Responde JSON {success: true/false}.
+    Dropdowns inline, guardado automático al cambiar.
+
+  poblar-lista (POST)
+    Carga automáticamente todos los jugadores de ambos
+    clubes según la categoría del partido.
+    Lógica: partidos.categoria = categoria.nombre → FK
+    → filtra jugadores por categoria_id + club_id.
+    Omite jugadores ya presentes (no duplica).
+
+  exportar-excel (GET ?partido_id=X)
+    Descarga .xls con la lista pareada.
+    Técnica: HTML → Excel (sin librerías externas).
+    Formato: encabezado con Fecha #N + partido + categoría,
+    columnas local (azul) y visitante (gris),
+    filas DT en gris, filas alternas sombreadas.
+
+FILTRADO INTELIGENTE AL AGREGAR JUGADOR:
+  Seleccionar partido → sistema detecta la categoría
+  → filtra jugadores de cada club por esa categoría.
+  Los jugadores se pasan como JSON agrupados por partido
+  y lado (local/visitante) para filtrado client-side (JS).
+
+ACCESO:
+  Menú: ítem "Listas" visible para arbitro, directivo,
+        miembro_liga, admin_liga.
+  partidos/view: botón "Lista de Jugadores" directo.
+  index de listas: muestra partidos agrupados (no entradas
+        individuales) con conteo local/visitante.
+
+
+----------------------------------------------------
+17. PENDIENTE / A CONSULTAR (actualizado)
+----------------------------------------------------
+- Lista de buena fe: queda para una próxima sesión.
+
+- Configurar rangos de fecha en cada categoría desde
+  /categoria/index.
+
+- Validación server-side: cruzar fecha_nacimiento del
+  jugador con el rango de su categoría asignada.
+
+- QR por jugador: pendiente para más adelante.
+
+- Completar datos migrados desde user:
+  Buscar dni LIKE 'TEMP-%' y completar nombre, DNI,
+  categoría y fecha de nacimiento.
+
+- Confirmar si las suspensiones pueden ser por torneo
+  en el futuro (hoy son generales/anuales).
+
+- Subir fotos de carnet desde el form de edición.
+
+====================================================

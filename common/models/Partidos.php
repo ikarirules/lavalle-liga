@@ -16,8 +16,10 @@ use yii\behaviors\BlameableBehavior;
  * @property int $club_visitante_id
  * @property string|null $cancha
  * @property string $estado
- * @property int|null $goles_local
- * @property int|null $goles_visitante
+ * @property string|null $arbitro
+ * @property string|null $asistente1
+ * @property string|null $asistente2
+ * @property string|null $asistente3
  * @property int $created_by
  * @property int|null $updated_by
  * @property int $created_at
@@ -53,13 +55,14 @@ class Partidos extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['cancha', 'goles_local', 'goles_visitante', 'updated_by'], 'default', 'value' => null],
+            [['cancha', 'arbitro', 'asistente1', 'asistente2', 'asistente3', 'updated_by'], 'default', 'value' => null],
             [['estado'], 'default', 'value' => 'programada'],
             [['fecha_id', 'categoria', 'club_local_id', 'club_visitante_id'], 'required'],
-            [['fecha_id', 'club_local_id', 'club_visitante_id', 'goles_local', 'goles_visitante', 'created_by', 'updated_by', 'created_at', 'updated_at'], 'integer'],
+            [['fecha_id', 'club_local_id', 'club_visitante_id', 'created_by', 'updated_by', 'created_at', 'updated_at'], 'integer'],
             [['estado'], 'string'],
             [['categoria'], 'string', 'max' => 50],
             [['cancha'], 'string', 'max' => 100],
+            [['arbitro', 'asistente1', 'asistente2', 'asistente3'], 'string', 'max' => 100],
             ['estado', 'in', 'range' => array_keys(self::optsEstado())],
         ];
     }
@@ -77,8 +80,10 @@ class Partidos extends \yii\db\ActiveRecord
             'club_visitante_id' => 'Club Visitante ID',
             'cancha' => 'Cancha',
             'estado' => 'Estado',
-            'goles_local' => 'Goles Local',
-            'goles_visitante' => 'Goles Visitante',
+            'arbitro' => 'Árbitro',
+            'asistente1' => 'Asistente 1',
+            'asistente2' => 'Asistente 2',
+            'asistente3' => 'Asistente 3',
             'created_by' => 'Creado por',
             'updated_by' => 'Actualizado por',
             'created_at' => 'Creado',
