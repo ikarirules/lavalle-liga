@@ -519,3 +519,256 @@ ACCESO:
 - Subir fotos de carnet desde el form de edición.
 
 ====================================================
+
+====================================================
+  BITÁCORA DE DESARROLLO — 05/05/2026
+====================================================
+
+CONTEXTO
+--------
+Ajustes en el módulo de listas de jugadores y agregado
+de cuerpo técnico (DT) en partidos.
+
+
+----------------------------------------------------
+18. REMERAS — AJUSTES
+----------------------------------------------------
+common/models/ListaJugadores.php:
+
+  - Eliminada la opción "DT" (valor 0) del dropdown.
+    Las remeras son solo números: sin DT en la lista.
+  - Rango reducido: de 1-99 a 1-22.
+  - Eliminada la constante REMERA_DT = 0.
+  - Eliminado el caso 0 → "DT" en displayRemera().
+  - Validación actualizada: min=1, max=22.
+
+
+----------------------------------------------------
+19. CUERPO TÉCNICO (DT) EN PARTIDOS
+----------------------------------------------------
+Migración: m260505_100000_add_dt_to_partidos.php
+  Agrega cuatro columnas VARCHAR(100) nullable:
+    dt1_local, dt2_local (después de club_local_id)
+    dt1_visitante, dt2_visitante (después de club_visitante_id)
+
+Comando: php yii migrate
+
+common/models/Partidos.php:
+  - @property, rules() (default null, string max 100)
+    y attributeLabels() actualizados.
+
+frontend/views/partidos/_form.php:
+  - DT 1 y DT 2 local en fila de 2 columnas,
+    justo debajo del bloque Club Local.
+  - DT 1 y DT 2 visitante en fila de 2 columnas,
+    justo debajo del bloque Club Visitante.
+
+frontend/views/partidos/view.php:
+  - Agregados dt1_local, dt2_local, dt1_visitante,
+    dt2_visitante al DetailView.
+
+
+----------------------------------------------------
+20. CABECERA EN LISTA DE PARTIDO
+----------------------------------------------------
+frontend/views/lista-jugadores/lista-partido.php:
+
+  Bloque nuevo de 3 columnas entre el título y
+  los botones de acción:
+    Izquierda: tarjeta "Cuerpo técnico local"
+               (DT 1 y DT 2, solo si tienen valor).
+    Centro:    nombre del árbitro.
+    Derecha:   tarjeta "Cuerpo técnico visitante"
+               (DT 1 y DT 2, solo si tienen valor).
+
+  El bloque entero solo se renderiza si al menos
+  uno de los campos (arbitro, dt1_local,
+  dt1_visitante) tiene valor.
+
+
+----------------------------------------------------
+21. PENDIENTE / A CONSULTAR (actualizado)
+----------------------------------------------------
+- Lista de buena fe: queda para una próxima sesión.
+
+- Configurar rangos de fecha en cada categoría desde
+  /categoria/index.
+
+- Validación server-side: cruzar fecha_nacimiento del
+  jugador con el rango de su categoría asignada.
+
+- QR por jugador: pendiente para más adelante.
+
+- Completar datos migrados desde user:
+  Buscar dni LIKE 'TEMP-%' y completar nombre, DNI,
+  categoría y fecha de nacimiento.
+
+- Confirmar si las suspensiones pueden ser por torneo
+  en el futuro (hoy son generales/anuales).
+
+- Subir fotos de carnet desde el form de edición.
+
+====================================================
+
+====================================================
+  BITÁCORA DE DESARROLLO — 17/05/2026
+====================================================
+
+CONTEXTO
+--------
+Se trabajó sobre el módulo de informe arbitral:
+formulario completo con goles, infracciones y
+aplicación automática de suspensiones. Además,
+mejoras en la vista de partidos (paginación y
+botones de acción) y dropdowns de DT por club.
+
+
+----------------------------------------------------
+22. INFORME ARBITRAL — FORMULARIO COMPLETO
+----------------------------------------------------
+
+TABLA NUEVA: informe_gol
+  Migración: m260517_100000_create_informe_gol_table.php
+  Columnas: id, informe_id (FK), jugador_id (FK jugador),
+            club_id (FK club), cantidad TINYINT UNSIGNED
+  FK en cascada hacia informe_arbitral, jugador, club.
+  Comando: php yii migrate (ya aplicada)
+
+Model: common/models/InformeGol.php (nuevo)
+  Relaciones: getInforme(), getJugador() → Jugador,
+              getClub() → Club
+
+FIX EN MODELO EXISTENTE:
+  common/models/InformeDetalle.php
+    - getJugador() corregido: apuntaba a User,
+      ahora apunta a Jugador (tabla jugador).
+
+CONTROLADOR — InformeArbitralController.php:
+  Nuevos use: InformeGol, InformeDetalle, TipoInfraccion,
+              Jugador, ListaJugadores.
+
+  actionCreate() — flujo completo con transacción:
+    1. Guarda cabecera InformeArbitral.
+    2. Guarda filas de InformeGol (goles por jugador).
+    3. Guarda filas de InformeDetalle (infracciones).
+    4. Por cada infracción con sancion_fechas_min > 0:
+       actualiza jugador.numero_fecha_suspension y
+       jugador.cant_fechas_suspension automáticamente.
+    Si falla cualquier paso → rollback completo.
+
+  actionJugadoresPorPartido($id) — nuevo, AJAX/JSON:
+    Devuelve jugadores de lista_jugadores del partido
+    agrupados por equipo local/visitante con nombre y remera.
+    Ruta: informe-arbitral/jugadores-por-partido?id=X
+    Acceso: arbitro, admin_liga.
+
+  Dropdown de partidos — nueva lógica:
+    Antes: solo la fecha más cercana (->one()).
+    Ahora: todas las fechas de los últimos 30 días
+           y próximos 15, agrupadas como optgroups
+           en el dropdown (Fecha N — YYYY-MM-DD).
+
+  Campo arbitro_id:
+    - Si el usuario es árbitro → se pre-llena con su ID
+      en GET y se fuerza en POST (no manipulable).
+    - Si no → textInput manual (admin_liga).
+
+VISTA — informe-arbitral/_form.php:
+  Sección CABECERA: partido, árbitro (auto o manual),
+    asistente, observaciones.
+    Campos created_by, updated_by, created_at, updated_at
+    eliminados (los manejan los Behaviors).
+
+  Sección GOLES (tabla dinámica con JS):
+    Columnas: Equipo | Jugador | Cantidad | ✕
+    Botón "+ Agregar gol" (deshabilitado hasta elegir partido).
+    Al seleccionar equipo → jugador dropdown se filtra
+    con los jugadores de ese club (cargados por AJAX).
+
+  Sección INFRACCIONES (tabla dinámica con JS):
+    Columnas: Equipo | Jugador | Tipo infracción | Minuto | ✕
+    Botón "+ Agregar infracción".
+    Tipo de infracción viene de TipoInfraccion::find()->all().
+
+  AJAX al cambiar partido:
+    Llama a jugadores-por-partido?id=X, carga JSON con
+    jugadores de local y visitante, habilita los botones
+    de agregar y repopula los dropdowns de equipo.
+
+create.php: pasa $tiposOptions y elimina $fechaLabel.
+
+
+----------------------------------------------------
+23. PARTIDOS — MEJORAS DE VISTA
+----------------------------------------------------
+
+frontend/views/partidos/index.php:
+  - Paginación: cambiado a \yii\bootstrap5\LinkPager
+    con firstPage/lastPage ocultos, flechas ‹ ›,
+    máx. 7 botones visibles.
+  - Botones de acción (ActionColumn) reemplazados:
+    "Editar" (btn-primary), "Ver" (btn-secondary),
+    "Eliminar" (btn-danger, con confirm en español).
+    nowrap en la celda para que no se partan.
+
+
+----------------------------------------------------
+24. PARTIDOS — DT DESDE DROPDOWNS POR CLUB
+----------------------------------------------------
+
+frontend/controllers/PartidosController.php:
+  - getFormData() extendido: ahora también carga
+    directivosPorClub [club_id => [nombre => nombre]].
+  - Directivos = jugadores con categoria.nombre = 'Directivo'
+    (joinWith('categoria')), agrupados por club_id.
+  - Retorna 6 valores ahora (antes 5).
+  - Ambos actionCreate() y actionUpdate() pasan
+    $directivosPorClub a la vista.
+  - use common\models\Jugador agregado.
+
+frontend/views/partidos/_form.php:
+  - dt1_local, dt2_local, dt1_visitante, dt2_visitante:
+    cambiados de textInput a dropDownList.
+  - Opciones iniciales renderizadas server-side según
+    los clubs del partido actual (update).
+  - JS actualizado: al cambiar la fecha, además de
+    actualizar clubs, repopula los 4 dropdowns de DT
+    usando directivosPorClub[club_id].
+  - Si un club no tiene directivos → solo "-- Sin DT --".
+
+frontend/views/partidos/create.php y update.php:
+  - Pasan $directivosPorClub a _form.php.
+
+
+----------------------------------------------------
+25. PENDIENTE / A CONSULTAR (actualizado)
+----------------------------------------------------
+- Informe arbitral — actionUpdate: cargar goles e
+  infracciones existentes para edición.
+
+- Informe arbitral — view: mostrar goles,
+  infracciones y suspensiones aplicadas.
+
+- Verificar que dropdown de partidos en informe
+  muestre correctamente todos los partidos de todas
+  las fechas dentro del rango (30 días atrás,
+  15 días adelante).
+
+- Lista de buena fe: queda para una próxima sesión.
+
+- Configurar rangos de fecha en cada categoría desde
+  /categoria/index.
+
+- Validación server-side: cruzar fecha_nacimiento del
+  jugador con el rango de su categoría asignada.
+
+- QR por jugador: pendiente para más adelante.
+
+- Completar datos migrados desde user:
+  Buscar dni LIKE 'TEMP-%' y completar nombre, DNI,
+  categoría y fecha de nacimiento.
+
+- Confirmar si las suspensiones pueden ser por torneo
+  en el futuro (hoy son generales/anuales).
+
+====================================================

@@ -47,6 +47,47 @@ function buildSelect(string $id, ?int $valorActual, array $opts): string {
         <?= Html::encode($localNombre) ?> <strong>vs</strong> <?= Html::encode($visitanteNombre) ?>
     </p>
 
+    <?php if ($partido->arbitro || $partido->dt1_local || $partido->dt1_visitante): ?>
+    <div class="row mb-3">
+        <div class="col-sm-4">
+            <div class="card card-body py-2 px-3 bg-light">
+                <small class="text-muted d-block mb-1">Cuerpo técnico local</small>
+                <?php if ($partido->dt1_local): ?>
+                    <span><strong>DT 1:</strong> <?= Html::encode($partido->dt1_local) ?></span><br>
+                <?php endif; ?>
+                <?php if ($partido->dt2_local): ?>
+                    <span><strong>DT 2:</strong> <?= Html::encode($partido->dt2_local) ?></span>
+                <?php endif; ?>
+                <?php if (!$partido->dt1_local && !$partido->dt2_local): ?>
+                    <span class="text-muted">—</span>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="col-sm-4 text-center d-flex align-items-center justify-content-center">
+            <?php if ($partido->arbitro): ?>
+                <div>
+                    <small class="text-muted d-block">Árbitro</small>
+                    <strong><?= Html::encode($partido->arbitro) ?></strong>
+                </div>
+            <?php endif; ?>
+        </div>
+        <div class="col-sm-4">
+            <div class="card card-body py-2 px-3 bg-light">
+                <small class="text-muted d-block mb-1">Cuerpo técnico visitante</small>
+                <?php if ($partido->dt1_visitante): ?>
+                    <span><strong>DT 1:</strong> <?= Html::encode($partido->dt1_visitante) ?></span><br>
+                <?php endif; ?>
+                <?php if ($partido->dt2_visitante): ?>
+                    <span><strong>DT 2:</strong> <?= Html::encode($partido->dt2_visitante) ?></span>
+                <?php endif; ?>
+                <?php if (!$partido->dt1_visitante && !$partido->dt2_visitante): ?>
+                    <span class="text-muted">—</span>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <p>
         <?= Html::beginForm(['poblar-lista'], 'post', ['style' => 'display:inline']) ?>
             <?= Html::hiddenInput('partido_id', $partido->id) ?>

@@ -2,8 +2,10 @@
 
 namespace frontend\controllers;
 
+use common\models\Categoria;
 use common\models\Club;
 use common\models\Fechas;
+use common\models\Partidos;
 use common\models\Torneo;
 use common\models\User;
 use frontend\models\FechasSearch;
@@ -96,10 +98,38 @@ class FechasController extends Controller
     public function actionCreate()
     {
         $model = new Fechas();
+        $categorias = Categoria::find()
+            ->where(['activo' => 1])
+            ->andWhere(['!=', 'nombre', 'Directivo'])
+            ->orderBy('nombre')
+            ->all();
 
         if ($this->request->isPost) {
-            if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+            $post = $this->request->post();
+            $seleccionadas = $post['categorias'] ?? [];
+
+            if ($model->load($post) && $model->validate()) {
+                $transaction = \Yii::$app->db->beginTransaction();
+                try {
+                    $model->save(false);
+
+                    foreach ($seleccionadas as $nombreCategoria) {
+                        $partido = new Partidos();
+                        $partido->fecha_id         = $model->id;
+                        $partido->categoria        = $nombreCategoria;
+                        $partido->club_local_id    = $model->club_local_id;
+                        $partido->club_visitante_id = $model->club_visitante_id;
+                        if (!$partido->save()) {
+                            throw new \Exception('Error al crear partido para: ' . $nombreCategoria);
+                        }
+                    }
+
+                    $transaction->commit();
+                    return $this->redirect(['view', 'id' => $model->id]);
+                } catch (\Exception $e) {
+                    $transaction->rollBack();
+                    \Yii::$app->session->setFlash('error', $e->getMessage());
+                }
             }
         } else {
             $model->loadDefaultValues();
@@ -109,9 +139,10 @@ class FechasController extends Controller
         $clubes  = ArrayHelper::map(Club::find()->where(['activo' => 1])->orderBy('nombre')->all(), 'id', 'nombre');
 
         return $this->render('create', [
-            'model'   => $model,
-            'torneos' => $torneos,
-            'clubes'  => $clubes,
+            'model'      => $model,
+            'torneos'    => $torneos,
+            'clubes'     => $clubes,
+            'categorias' => $categorias,
         ]);
     }
 

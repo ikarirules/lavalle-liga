@@ -54,7 +54,7 @@ class InformeDetalle extends \yii\db\ActiveRecord
 
     public function getJugador()
     {
-        return $this->hasOne(User::class, ['id' => 'jugador_id']);
+        return $this->hasOne(Jugador::class, ['id' => 'jugador_id']);
     }
 
     public function getClub()

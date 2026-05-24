@@ -13,7 +13,11 @@ use yii\behaviors\BlameableBehavior;
  * @property int $fecha_id
  * @property string $categoria
  * @property int $club_local_id
+ * @property string|null $dt1_local
+ * @property string|null $dt2_local
  * @property int $club_visitante_id
+ * @property string|null $dt1_visitante
+ * @property string|null $dt2_visitante
  * @property string|null $cancha
  * @property string $estado
  * @property string|null $arbitro
@@ -55,14 +59,16 @@ class Partidos extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['cancha', 'arbitro', 'asistente1', 'asistente2', 'asistente3', 'updated_by'], 'default', 'value' => null],
+            [['cancha', 'arbitro', 'asistente1', 'asistente2', 'asistente3',
+              'dt1_local', 'dt2_local', 'dt1_visitante', 'dt2_visitante', 'updated_by'], 'default', 'value' => null],
             [['estado'], 'default', 'value' => 'programada'],
             [['fecha_id', 'categoria', 'club_local_id', 'club_visitante_id'], 'required'],
             [['fecha_id', 'club_local_id', 'club_visitante_id', 'created_by', 'updated_by', 'created_at', 'updated_at'], 'integer'],
             [['estado'], 'string'],
             [['categoria'], 'string', 'max' => 50],
             [['cancha'], 'string', 'max' => 100],
-            [['arbitro', 'asistente1', 'asistente2', 'asistente3'], 'string', 'max' => 100],
+            [['arbitro', 'asistente1', 'asistente2', 'asistente3',
+              'dt1_local', 'dt2_local', 'dt1_visitante', 'dt2_visitante'], 'string', 'max' => 100],
             ['estado', 'in', 'range' => array_keys(self::optsEstado())],
         ];
     }
@@ -76,8 +82,12 @@ class Partidos extends \yii\db\ActiveRecord
             'id' => 'ID',
             'fecha_id' => 'Fecha ID',
             'categoria' => 'Categoria',
-            'club_local_id' => 'Club Local ID',
+            'club_local_id'    => 'Club Local ID',
+            'dt1_local'        => 'DT 1 Local',
+            'dt2_local'        => 'DT 2 Local',
             'club_visitante_id' => 'Club Visitante ID',
+            'dt1_visitante'    => 'DT 1 Visitante',
+            'dt2_visitante'    => 'DT 2 Visitante',
             'cancha' => 'Cancha',
             'estado' => 'Estado',
             'arbitro' => 'Árbitro',

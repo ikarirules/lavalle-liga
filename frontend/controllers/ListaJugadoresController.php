@@ -389,17 +389,16 @@ class ListaJugadoresController extends Controller
             $visitanteNombre = $p->clubVisitante ? $p->clubVisitante->nombre : '?';
             $partidos[$p->id] = "Partido #{$p->id} — {$localNombre} vs {$visitanteNombre}";
 
-            // Filtrar jugadores por categoría del partido
-            $categoria = Categoria::find()->where(['nombre' => $p->categoria])->one();
-            $catId     = $categoria ? $categoria->id : null;
-
-            $buildList = function ($clubId) use ($catId) {
-                $q = Jugador::find()->where(['club_id' => $clubId]);
-                if ($catId) $q->andWhere(['categoria_id' => $catId]);
-                return array_map(
-                    fn($j) => ['id' => $j->id, 'text' => $j->nombre . ' — DNI ' . $j->dni],
-                    $q->orderBy('nombre')->all()
-                );
+            $buildList = function ($clubId) {
+                $jugadores = Jugador::find()
+                    ->with('categoria')
+                    ->where(['club_id' => $clubId])
+                    ->orderBy('nombre')
+                    ->all();
+                return array_map(function ($j) {
+                    $cat  = $j->categoria ? ' [' . $j->categoria->nombre . ']' : '';
+                    return ['id' => $j->id, 'text' => $j->nombre . ' — DNI ' . $j->dni . $cat];
+                }, $jugadores);
             };
 
             $jugadoresPorPartido[$p->id] = [

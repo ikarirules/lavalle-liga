@@ -26,7 +26,6 @@ class ListaJugadores extends \yii\db\ActiveRecord
     const TIPO_BUENA_FE = 'buena_fe';
     const TIPO_PARTIDO  = 'partido';
 
-    const REMERA_DT = 0;
 
     public function behaviors()
     {
@@ -49,7 +48,7 @@ class ListaJugadores extends \yii\db\ActiveRecord
             [['club_id', 'jugador_id'], 'required'],
             [['partido_id', 'club_id', 'jugador_id', 'remera',
               'created_by', 'updated_by', 'created_at', 'updated_at'], 'integer'],
-            [['remera'], 'integer', 'min' => 0, 'max' => 99],
+            [['remera'], 'integer', 'min' => 1, 'max' => 22],
             ['tipo_lista', 'in', 'range' => array_keys(self::optsTipoLista())],
             ['partido_id', 'required', 'when' => fn($m) => $m->tipo_lista === self::TIPO_PARTIDO],
             ['partido_id', 'exist', 'skipOnEmpty' => true,
@@ -83,22 +82,20 @@ class ListaJugadores extends \yii\db\ActiveRecord
         ];
     }
 
-    /** Opciones para el dropdown de remera: 1-99 + DT (valor 0). */
+    /** Opciones para el dropdown de remera: 1-99. */
     public static function optsRemera(): array
     {
         $opts = ['' => '—'];
-        for ($i = 1; $i <= 99; $i++) {
+        for ($i = 1; $i <= 22; $i++) {
             $opts[$i] = (string) $i;
         }
-        $opts[0] = 'DT';
         return $opts;
     }
 
-    /** Texto legible de la remera (0 → "DT", null → "—"). */
+    /** Texto legible de la remera (null → "—"). */
     public function displayRemera(): string
     {
         if ($this->remera === null) return '—';
-        if ($this->remera === 0)    return 'DT';
         return (string) $this->remera;
     }
 

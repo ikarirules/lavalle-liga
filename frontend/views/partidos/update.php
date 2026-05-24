@@ -19,12 +19,13 @@ $this->params['breadcrumbs'][] = 'Editar';
     <h1><?= Html::encode($this->title) ?></h1>
 
     <?= $this->render('_form', [
-        'model'         => $model,
-        'fechasOptions' => $fechasOptions,
-        'fechasData'    => $fechasData,
-        'isArbitro'     => $isArbitro,
-        'arbitros'      => $arbitros,
-        'categorias'    => $categorias,
+        'model'             => $model,
+        'fechasOptions'     => $fechasOptions,
+        'fechasData'        => $fechasData,
+        'isArbitro'         => $isArbitro,
+        'arbitros'          => $arbitros,
+        'categorias'        => $categorias,
+        'directivosPorClub' => $directivosPorClub,
     ]) ?>
 
 </div>

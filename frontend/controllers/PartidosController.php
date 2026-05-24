@@ -4,6 +4,7 @@ namespace frontend\controllers;
 
 use common\models\Categoria;
 use common\models\Fechas;
+use common\models\Jugador;
 use common\models\Partidos;
 use common\models\User;
 use frontend\models\PartidosSearch;
@@ -103,15 +104,16 @@ class PartidosController extends Controller
             }
         }
 
-        [$fechasOptions, $fechasData, $isArbitro, $arbitros, $categorias] = $this->getFormData();
+        [$fechasOptions, $fechasData, $isArbitro, $arbitros, $categorias, $directivosPorClub] = $this->getFormData();
 
         return $this->render('create', [
-            'model'         => $model,
-            'fechasOptions' => $fechasOptions,
-            'fechasData'    => $fechasData,
-            'isArbitro'     => $isArbitro,
-            'arbitros'      => $arbitros,
-            'categorias'    => $categorias,
+            'model'              => $model,
+            'fechasOptions'      => $fechasOptions,
+            'fechasData'         => $fechasData,
+            'isArbitro'          => $isArbitro,
+            'arbitros'           => $arbitros,
+            'categorias'         => $categorias,
+            'directivosPorClub'  => $directivosPorClub,
         ]);
     }
 
@@ -130,15 +132,16 @@ class PartidosController extends Controller
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
-        [$fechasOptions, $fechasData, $isArbitro, $arbitros, $categorias] = $this->getFormData();
+        [$fechasOptions, $fechasData, $isArbitro, $arbitros, $categorias, $directivosPorClub] = $this->getFormData();
 
         return $this->render('update', [
-            'model'         => $model,
-            'fechasOptions' => $fechasOptions,
-            'fechasData'    => $fechasData,
-            'isArbitro'     => $isArbitro,
-            'arbitros'      => $arbitros,
-            'categorias'    => $categorias,
+            'model'              => $model,
+            'fechasOptions'      => $fechasOptions,
+            'fechasData'         => $fechasData,
+            'isArbitro'          => $isArbitro,
+            'arbitros'           => $arbitros,
+            'categorias'         => $categorias,
+            'directivosPorClub'  => $directivosPorClub,
         ]);
     }
 
@@ -212,7 +215,18 @@ class PartidosController extends Controller
             );
         }
 
-        return [$fechasOptions, $fechasData, $isArbitro, $arbitros, $categorias];
+        // Directivos = jugadores con categoría "Directivo", agrupados por club
+        $directivosPorClub = [];
+        $allDirectivos = Jugador::find()
+            ->joinWith('categoria', true)
+            ->where(['categoria.nombre' => 'Directivo'])
+            ->orderBy('jugador.nombre')
+            ->all();
+        foreach ($allDirectivos as $j) {
+            $directivosPorClub[$j->club_id][$j->nombre] = $j->nombre;
+        }
+
+        return [$fechasOptions, $fechasData, $isArbitro, $arbitros, $categorias, $directivosPorClub];
     }
 
     protected function findModel($id)
