@@ -23,6 +23,64 @@ AppAsset::register($this);
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="alternate icon" href="/favicon.ico">
     <?php $this->head() ?>
+    <style>
+        /* ── Fondo general ── */
+        body { background-color: #2b2d31; color: #d0d0d0; padding-top: 70px; }
+        main .container { padding-top: .4rem; }
+        .breadcrumb { margin-bottom: .5rem; }
+
+        /* ── Navbar neón ── */
+        .navbar-brand {
+            color: #39ff14 !important;
+            text-shadow: 0 0 10px #39ff14;
+            font-weight: 700;
+        }
+        .navbar-brand:hover { color: #00f5ff !important; text-shadow: 0 0 14px #00f5ff; }
+
+        .navbar-nav .nav-link {
+            color: #39ff14 !important;
+            text-shadow: 0 0 6px #39ff1480;
+            transition: color .2s, text-shadow .2s;
+        }
+        .navbar-nav .nav-link:hover,
+        .navbar-nav .nav-link.active {
+            color: #00f5ff !important;
+            text-shadow: 0 0 10px #00f5ff;
+        }
+
+        /* toggler hamburguesa */
+        .navbar-toggler { border-color: #39ff1460; }
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%2339ff14' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        /* usuario logueado */
+        .navbar-text { color: #39ff14 !important; text-shadow: 0 0 6px #39ff1480; }
+
+        /* botones en navbar */
+        .navbar .btn-outline-light {
+            color: #39ff14;
+            border-color: #39ff14;
+            text-shadow: 0 0 6px #39ff1480;
+        }
+        .navbar .btn-outline-light:hover {
+            background: #39ff14;
+            color: #0a0a0a;
+            box-shadow: 0 0 12px #39ff14;
+        }
+        .navbar .btn-success {
+            background: #00f5ff;
+            border-color: #00f5ff;
+            color: #0a0a0a;
+            text-shadow: none;
+            box-shadow: 0 0 10px #00f5ffaa;
+        }
+        .navbar .btn-success:hover {
+            background: #39ff14;
+            border-color: #39ff14;
+            box-shadow: 0 0 14px #39ff14;
+        }
+    </style>
 </head>
 <body class="d-flex flex-column h-100">
 <?php $this->beginBody() ?>
@@ -35,7 +93,8 @@ AppAsset::register($this);
         'brandLabel' => '⚽ Liga',
         'brandUrl'   => Yii::$app->homeUrl,
         'options'    => [
-            'class' => 'navbar navbar-expand-xl navbar-dark bg-dark fixed-top',
+            'class' => 'navbar navbar-expand-xl fixed-top',
+            'style' => 'background:#0a0a0a; border-bottom:1px solid #39ff1440;',
         ],
     ]);
 
@@ -79,8 +138,7 @@ AppAsset::register($this);
     if ($user->isGuest) {
         echo Html::tag(
             'div',
-            Html::a('Registrarse', ['/site/signup'], ['class' => 'btn btn-outline-light me-2'])
-            . Html::a('Iniciar sesión', ['/site/login'], ['class' => 'btn btn-success']),
+            Html::a('Iniciar sesión', ['/site/login'], ['class' => 'btn btn-success']),
             ['class' => 'd-flex gap-2']
         );
     } else {

@@ -11,6 +11,7 @@ use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use common\models\LoginForm;
+use common\models\Fechas;
 use frontend\models\PasswordResetRequestForm;
 use frontend\models\ResetPasswordForm;
 use frontend\models\SignupForm;
@@ -75,7 +76,20 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        $today = date('Y-m-d');
+        $dayOfWeek = (int)date('w'); // 0=domingo
+        $daysUntilSunday = $dayOfWeek === 0 ? 7 : 7 - $dayOfWeek;
+        $nextSunday = date('Y-m-d', strtotime("+{$daysUntilSunday} days"));
+
+        $fechas = Fechas::find()
+            ->with(['partidos.clubLocal', 'partidos.clubVisitante'])
+            ->where(['between', 'fecha_programada', $today, $nextSunday])
+            ->orderBy(['fecha_programada' => SORT_ASC, 'numero_fecha' => SORT_ASC])
+            ->all();
+
+        return $this->render('index', [
+            'fechas' => $fechas,
+        ]);
     }
 
     /**
@@ -153,15 +167,7 @@ class SiteController extends Controller
      */
     public function actionSignup()
     {
-        $model = new SignupForm();
-        if ($model->load(Yii::$app->request->post()) && $model->signup()) {
-            Yii::$app->session->setFlash('success', 'Thank you for registration. Please check your inbox for verification email.');
-            return $this->goHome();
-        }
-
-        return $this->render('signup', [
-            'model' => $model,
-        ]);
+        throw new \yii\web\NotFoundHttpException();
     }
 
     /**

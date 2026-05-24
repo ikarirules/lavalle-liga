@@ -14,6 +14,7 @@ class SignupForm extends Model
     public $username;
     public $email;
     public $password;
+    public $verifyCode;
 
 
     /**
@@ -35,6 +36,7 @@ class SignupForm extends Model
 
             ['password', 'required'],
             ['password', 'string', 'min' => Yii::$app->params['user.passwordMinLength']],
+            ['verifyCode', 'captcha', 'captchaAction' => '/site/captcha'],
         ];
     }
 
