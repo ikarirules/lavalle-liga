@@ -90,7 +90,7 @@ $estadoBadge = [
                                 <span class="partido-cat"><?= Html::encode($partido->categoria) ?></span>
                                 <div class="partido-vs">
                                     <span class="partido-sep">vs</span>
-                                    <span class="partido-club"><?= Html::encode($partido->clubVisitante?->nombre ?? '—') ?></span>
+                               
                                 </div>
                                 <div class="partido-meta">
                                     <?php if ($partido->cancha): ?>
