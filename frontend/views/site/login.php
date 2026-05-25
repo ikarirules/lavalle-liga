@@ -117,10 +117,12 @@ $this->title = 'Iniciar sesión';
 
             <?= $form->field($model, 'rememberMe')->checkbox() ?>
 
-            <?= $form->field($model, 'verifyCode')->widget(Captcha::class, [
+            <?php /* CAPTCHA DESHABILITADO TEMPORALMENTE
+            echo $form->field($model, 'verifyCode')->widget(Captcha::class, [
                 'captchaAction' => '/site/captcha',
                 'template'      => '<div class="mb-2">{image}</div>{input}',
-            ])->label('Código de verificación') ?>
+            ])->label('Código de verificación');
+            */ ?>
 
             <div class="login-links mb-3">
                 ¿Olvidaste tu contraseña? <?= Html::a('Recuperar', ['site/request-password-reset']) ?>
