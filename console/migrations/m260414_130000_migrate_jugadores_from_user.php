@@ -29,7 +29,8 @@ class m260414_130000_migrate_jugadores_from_user extends Migration
                 {$now}                        AS updated_at
             FROM user u
             INNER JOIN auth_assignment aa ON aa.user_id = CAST(u.id AS CHAR) AND aa.item_name = 'jugador'
-            WHERE NOT EXISTS (
+            WHERE u.club_id IS NOT NULL
+              AND NOT EXISTS (
                 SELECT 1 FROM jugador j2 WHERE j2.dni = CONCAT('TEMP-', u.id)
             )
         ");
