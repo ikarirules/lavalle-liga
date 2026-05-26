@@ -32,18 +32,18 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'torneo_id',
                 'label'     => 'Torneo',
-                'value'     => fn($model) => $model->torneo?->nombre ?? '-',
+                'value'     => fn($model) => $model->torneo ? $model->torneo->nombre : '-',
             ],
             'fecha_programada',
             [
                 'attribute' => 'club_local_id',
                 'label'     => 'Club Local',
-                'value'     => fn($model) => $model->clubLocal?->nombre ?? '-',
+                'value'     => fn($model) => $model->clubLocal ? $model->clubLocal->nombre : '-',
             ],
             [
                 'attribute' => 'club_visitante_id',
                 'label'     => 'Club Visitante',
-                'value'     => fn($model) => $model->clubVisitante?->nombre ?? '-',
+                'value'     => fn($model) => $model->clubVisitante ? $model->clubVisitante->nombre : '-',
             ],
             'fecha_reprogramada_1',
             //'fecha_reprogramada_2',
