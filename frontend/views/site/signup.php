@@ -26,12 +26,10 @@ $this->params['breadcrumbs'][] = $this->title;
 
                 <?= $form->field($model, 'password')->passwordInput() ?>
 
-                <?php /* CAPTCHA DESHABILITADO TEMPORALMENTE
-                echo $form->field($model, 'verifyCode')->widget(Captcha::class, [
+                <?= $form->field($model, 'verifyCode')->widget(Captcha::class, [
                     'captchaAction' => '/site/captcha',
                     'template'      => '<div class="d-flex align-items-center gap-3 mb-1">{image}</div>{input}',
-                ])->label('Código de verificación');
-                */ ?>
+                ])->label('Código de verificación') ?>
 
                 <div class="form-group">
                     <?= Html::submitButton('Signup', ['class' => 'btn btn-primary', 'name' => 'signup-button']) ?>
