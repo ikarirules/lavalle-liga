@@ -9,4 +9,9 @@
 -------------------------------------------------------
 -en la mayoria de las vistas poner la fecha nominal y no el id
 -comenzar con informe arbitral. 
+
+-----------------------------------------------------------
 -ligadeldeportedelavalle   dominio
+-arreglar errores en el servidor 
+-error en captcha
+
