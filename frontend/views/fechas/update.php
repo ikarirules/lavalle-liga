@@ -5,10 +5,10 @@ use yii\helpers\Html;
 /** @var yii\web\View $this */
 /** @var common\models\Fechas $model */
 
-$this->title = 'Update Fechas: ' . $model->id;
+$this->title = 'Editar Fecha: ' . $model->numero_fecha;
 $this->params['breadcrumbs'][] = ['label' => 'Fechas', 'url' => ['index']];
-$this->params['breadcrumbs'][] = ['label' => $model->id, 'url' => ['view', 'id' => $model->id]];
-$this->params['breadcrumbs'][] = 'Update';
+$this->params['breadcrumbs'][] = ['label' => $model->numero_fecha, 'url' => ['view', 'id' => $model->id]];
+$this->params['breadcrumbs'][] = 'Editar';
 ?>
 <div class="fechas-update">
 

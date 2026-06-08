@@ -14,12 +14,10 @@ use yii\widgets\ActiveForm;
 /** @var array $categorias          [nombre => nombre] */
 /** @var array $directivosPorClub   [club_id => [username => username]] */
 
-// Determinar valores de display para club local/visitante al cargar (update / repost con error)
 $currentFechaData = ($model->fecha_id && isset($fechasData[$model->fecha_id]))
     ? $fechasData[$model->fecha_id]
     : null;
 
-// Opciones iniciales de directivos según los clubes actuales
 $clubLocalId     = $currentFechaData['club_local_id']     ?? null;
 $clubVisitanteId = $currentFechaData['club_visitante_id'] ?? null;
 $dtLocalOpts     = array_merge(['' => '-- Sin DT --'], $directivosPorClub[$clubLocalId]     ?? []);
@@ -30,83 +28,105 @@ $dtVisitanteOpts = array_merge(['' => '-- Sin DT --'], $directivosPorClub[$clubV
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <!-- Fecha -->
-    <?= $form->field($model, 'fecha_id')->dropDownList($fechasOptions, [
-        'prompt' => '-- Seleccionar fecha --',
-        'id'     => 'partido-fecha_id',
-    ])->label('Fecha') ?>
-
-    <!-- Fecha programada (solo lectura, se llena con JS) -->
-    <div class="form-group" id="fecha-programada-wrapper"<?= $currentFechaData ? '' : ' style="display:none"' ?>>
-        <label class="control-label">Fecha Programada</label>
-        <input type="text" id="fecha-programada-display" class="form-control" readonly
-               value="<?= $currentFechaData ? Html::encode($currentFechaData['fecha_programada']) : '' ?>">
-    </div>
-
-    <!-- Categoría -->
-    <?= $form->field($model, 'categoria')->dropDownList($categorias, ['prompt' => '-- Seleccionar categoría --']) ?>
-
-    <!-- Club Local — hidden input (valor real) + campo visible de solo lectura -->
-    <?= $form->field($model, 'club_local_id')->hiddenInput(['id' => 'partido-club_local_id'])->label(false) ?>
-    <div class="form-group">
-        <label class="control-label">Club Local</label>
-        <input type="text" id="club-local-display" class="form-control" readonly
-               value="<?= $currentFechaData ? Html::encode($currentFechaData['club_local_nombre']) : '' ?>"
-               placeholder="Se completa al seleccionar la fecha">
-    </div>
-
-    <!-- DT Local -->
+    <!-- Fecha / Fecha programada -->
     <div class="row">
-        <div class="col-sm-6">
+        <div class="col-md-6">
+            <?= $form->field($model, 'fecha_id')->dropDownList($fechasOptions, [
+                'prompt' => '-- Seleccionar fecha --',
+                'id'     => 'partido-fecha_id',
+            ])->label('Fecha') ?>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group" id="fecha-programada-wrapper"<?= $currentFechaData ? '' : ' style="display:none"' ?>>
+                <label class="control-label">Fecha Programada</label>
+                <input type="text" id="fecha-programada-display" class="form-control" readonly
+                       value="<?= $currentFechaData ? Html::encode($currentFechaData['fecha_programada']) : '' ?>">
+            </div>
+        </div>
+    </div>
+
+    <!-- Categoría / Estado -->
+    <div class="row">
+        <div class="col-md-6">
+            <?= $form->field($model, 'categoria')->dropDownList($categorias, ['prompt' => '-- Seleccionar categoría --']) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'estado')->dropDownList([
+                'programada' => 'Programada',
+                'suspendida' => 'Suspendida',
+                'postergada' => 'Postergada',
+                'jugada'     => 'Jugada',
+            ]) ?>
+        </div>
+    </div>
+
+    <!-- Cancha / Árbitro -->
+    <div class="row">
+        <div class="col-md-6">
+            <?= $form->field($model, 'cancha')->textInput(['maxlength' => true]) ?>
+        </div>
+        <div class="col-md-6">
+            <?php if ($isArbitro): ?>
+                <?= $form->field($model, 'arbitro')->textInput(['readonly' => true])->label('Árbitro') ?>
+            <?php else: ?>
+                <?= $form->field($model, 'arbitro')->dropDownList($arbitros, [
+                    'prompt' => '-- Seleccionar árbitro --',
+                ])->label('Árbitro') ?>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Asistentes -->
+    <div class="row">
+        <div class="col-md-4">
+            <?= $form->field($model, 'asistente1')->textInput(['maxlength' => true])->label('Asistente 1') ?>
+        </div>
+        <div class="col-md-4">
+            <?= $form->field($model, 'asistente2')->textInput(['maxlength' => true])->label('Asistente 2') ?>
+        </div>
+        <div class="col-md-4">
+            <?= $form->field($model, 'asistente3')->textInput(['maxlength' => true])->label('Asistente 3') ?>
+        </div>
+    </div>
+
+    <!-- Clubs (hidden inputs + displays de solo lectura) -->
+    <?= $form->field($model, 'club_local_id')->hiddenInput(['id' => 'partido-club_local_id'])->label(false) ?>
+    <?= $form->field($model, 'club_visitante_id')->hiddenInput(['id' => 'partido-club_visitante_id'])->label(false) ?>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="control-label">Club Local</label>
+                <input type="text" id="club-local-display" class="form-control" readonly
+                       value="<?= $currentFechaData ? Html::encode($currentFechaData['club_local_nombre']) : '' ?>"
+                       placeholder="Se completa al seleccionar la fecha">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="control-label">Club Visitante</label>
+                <input type="text" id="club-visitante-display" class="form-control" readonly
+                       value="<?= $currentFechaData ? Html::encode($currentFechaData['club_visitante_nombre']) : '' ?>"
+                       placeholder="Se completa al seleccionar la fecha">
+            </div>
+        </div>
+    </div>
+
+    <!-- DT Local / DT Visitante -->
+    <div class="row">
+        <div class="col-md-3 col-sm-6">
             <?= $form->field($model, 'dt1_local')->dropDownList($dtLocalOpts, ['id' => 'dt1-local'])->label('DT 1 Local') ?>
         </div>
-        <div class="col-sm-6">
+        <div class="col-md-3 col-sm-6">
             <?= $form->field($model, 'dt2_local')->dropDownList($dtLocalOpts, ['id' => 'dt2-local'])->label('DT 2 Local') ?>
         </div>
-    </div>
-
-    <!-- Club Visitante — hidden input (valor real) + campo visible de solo lectura -->
-    <?= $form->field($model, 'club_visitante_id')->hiddenInput(['id' => 'partido-club_visitante_id'])->label(false) ?>
-    <div class="form-group">
-        <label class="control-label">Club Visitante</label>
-        <input type="text" id="club-visitante-display" class="form-control" readonly
-               value="<?= $currentFechaData ? Html::encode($currentFechaData['club_visitante_nombre']) : '' ?>"
-               placeholder="Se completa al seleccionar la fecha">
-    </div>
-
-    <!-- DT Visitante -->
-    <div class="row">
-        <div class="col-sm-6">
+        <div class="col-md-3 col-sm-6">
             <?= $form->field($model, 'dt1_visitante')->dropDownList($dtVisitanteOpts, ['id' => 'dt1-visitante'])->label('DT 1 Visitante') ?>
         </div>
-        <div class="col-sm-6">
+        <div class="col-md-3 col-sm-6">
             <?= $form->field($model, 'dt2_visitante')->dropDownList($dtVisitanteOpts, ['id' => 'dt2-visitante'])->label('DT 2 Visitante') ?>
         </div>
     </div>
-
-    <!-- Cancha -->
-    <?= $form->field($model, 'cancha')->textInput(['maxlength' => true]) ?>
-
-    <!-- Estado -->
-    <?= $form->field($model, 'estado')->dropDownList([
-        'programada' => 'Programada',
-        'suspendida' => 'Suspendida',
-        'postergada' => 'Postergada',
-        'jugada'     => 'Jugada',
-    ]) ?>
-
-    <!-- Árbitro: solo lectura si el logueado es árbitro, desplegable si no -->
-    <?php if ($isArbitro): ?>
-        <?= $form->field($model, 'arbitro')->textInput(['readonly' => true])->label('Árbitro') ?>
-    <?php else: ?>
-        <?= $form->field($model, 'arbitro')->dropDownList($arbitros, [
-            'prompt' => '-- Seleccionar árbitro --',
-        ])->label('Árbitro') ?>
-    <?php endif; ?>
-
-    <?= $form->field($model, 'asistente1')->textInput(['maxlength' => true])->label('Asistente 1') ?>
-    <?= $form->field($model, 'asistente2')->textInput(['maxlength' => true])->label('Asistente 2') ?>
-    <?= $form->field($model, 'asistente3')->textInput(['maxlength' => true])->label('Asistente 3') ?>
 
     <div class="form-group">
         <?= Html::submitButton('Guardar', ['class' => 'btn btn-success']) ?>
@@ -117,8 +137,8 @@ $dtVisitanteOpts = array_merge(['' => '-- Sin DT --'], $directivosPorClub[$clubV
 </div>
 
 <?php
-$fechasJson    = Json::encode($fechasData);
-$directivosJson = \yii\helpers\Json::encode($directivosPorClub);
+$fechasJson     = Json::encode($fechasData);
+$directivosJson = Json::encode($directivosPorClub);
 $js = <<<JS
 var fechasData = $fechasJson;
 var directivosPorClub = $directivosJson;
@@ -145,8 +165,7 @@ $('#partido-fecha_id').on('change', function () {
         $('#club-local-display').val(f.club_local_nombre);
         $('#partido-club_visitante_id').val(f.club_visitante_id);
         $('#club-visitante-display').val(f.club_visitante_nombre);
-        // Repopular dropdowns de DT
-        var dtLocalOpts    = buildDtOpts(f.club_local_id, '');
+        var dtLocalOpts     = buildDtOpts(f.club_local_id, '');
         var dtVisitanteOpts = buildDtOpts(f.club_visitante_id, '');
         $('#dt1-local, #dt2-local').html(dtLocalOpts);
         $('#dt1-visitante, #dt2-visitante').html(dtVisitanteOpts);

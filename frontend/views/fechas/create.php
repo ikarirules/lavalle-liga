@@ -5,7 +5,7 @@ use yii\helpers\Html;
 /** @var yii\web\View $this */
 /** @var common\models\Fechas $model */
 
-$this->title = 'Create Fechas';
+$this->title = 'Crear Fecha';
 $this->params['breadcrumbs'][] = ['label' => 'Fechas', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>

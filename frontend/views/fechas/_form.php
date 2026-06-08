@@ -10,13 +10,15 @@ use yii\widgets\ActiveForm;
 /** @var array $clubes */
 /** @var common\models\Categoria[] $categorias */
 
-// Flatpickr
 $this->registerCss('.flatpickr-input { background-color: #fff !important; }');
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js', ['depends' => [\yii\web\JqueryAsset::class]]);
-$this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js',       ['depends' => [\yii\web\JqueryAsset::class]]);
+$this->registerJsFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerCssFile('https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css');
-$this->registerJs('flatpickr("#fechas-fecha_programada", { dateFormat: "Y-m-d", allowInput: true, locale: "es" });');
 $this->registerJs(<<<JS
+    flatpickr("#fechas-fecha_programada",    { dateFormat: "Y-m-d", allowInput: true, locale: "es" });
+    flatpickr("#fechas-fecha_reprogramada_1", { dateFormat: "Y-m-d", allowInput: true, locale: "es" });
+    flatpickr("#fechas-fecha_reprogramada_2", { dateFormat: "Y-m-d", allowInput: true, locale: "es" });
+    flatpickr("#fechas-fecha_jugada",         { dateFormat: "Y-m-d", allowInput: true, locale: "es" });
     $('#sel-todas').on('click', function(e) {
         e.preventDefault();
         $('.cat-check').prop('checked', true);
@@ -32,25 +34,47 @@ JS);
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'numero_fecha')->textInput() ?>
+    <div class="row">
+        <div class="col-md-6">
+            <?= $form->field($model, 'numero_fecha')->textInput() ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'torneo_id')->dropDownList($torneos, ['prompt' => '-- Seleccionar torneo --']) ?>
+        </div>
+    </div>
 
-    <?= $form->field($model, 'torneo_id')->dropDownList($torneos, [
-        'prompt' => '-- Seleccionar torneo --',
-    ]) ?>
+    <div class="row">
+        <div class="col-md-6">
+            <?= $form->field($model, 'fecha_programada')->textInput(['placeholder' => 'AAAA-MM-DD']) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'fecha_jugada')->textInput(['placeholder' => 'AAAA-MM-DD']) ?>
+        </div>
+    </div>
 
-    <?= $form->field($model, 'fecha_programada')->textInput(['placeholder' => 'AAAA-MM-DD']) ?>
+    <div class="row">
+        <div class="col-md-6">
+            <?= $form->field($model, 'fecha_reprogramada_1')->textInput(['placeholder' => 'AAAA-MM-DD']) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'fecha_reprogramada_2')->textInput(['placeholder' => 'AAAA-MM-DD']) ?>
+        </div>
+    </div>
 
-    <?= $form->field($model, 'fecha_reprogramada_1')->textInput() ?>
+    <div class="row">
+        <div class="col-md-6">
+            <?= $form->field($model, 'club_local_id')->dropDownList($clubes, ['prompt' => '-- Club local --']) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'club_visitante_id')->dropDownList($clubes, ['prompt' => '-- Club visitante --']) ?>
+        </div>
+    </div>
 
-    <?= $form->field($model, 'fecha_reprogramada_2')->textInput() ?>
-
-    <?= $form->field($model, 'fecha_jugada')->textInput() ?>
-
-    <?= $form->field($model, 'club_local_id')->dropDownList($clubes, ['prompt' => '-- Club local --']) ?>
-
-    <?= $form->field($model, 'club_visitante_id')->dropDownList($clubes, ['prompt' => '-- Club visitante --']) ?>
-
-    <?= $form->field($model, 'observaciones')->textarea(['rows' => 6]) ?>
+    <div class="row">
+        <div class="col-12">
+            <?= $form->field($model, 'observaciones')->textarea(['rows' => 4]) ?>
+        </div>
+    </div>
 
     <?php if (!empty($categorias)): ?>
     <div class="mb-3">

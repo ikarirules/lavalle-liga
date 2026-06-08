@@ -5,7 +5,7 @@ use yii\helpers\Html;
 /** @var yii\web\View $this */
 /** @var common\models\Torneo $model */
 
-$this->title = 'Create Torneo';
+$this->title = 'Crear Torneo';
 $this->params['breadcrumbs'][] = ['label' => 'Torneos', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
