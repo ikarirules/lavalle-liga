@@ -1,35 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
     <clipPath id="c">
-      <circle cx="32" cy="32" r="30"/>
+      <circle cx="32" cy="32" r="28"/>
     </clipPath>
-    <radialGradient id="g" cx="40%" cy="35%" r="60%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#cccccc"/>
+    <radialGradient id="bg" cx="40%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#3a3d42"/>
+      <stop offset="100%" stop-color="#1a1c1f"/>
     </radialGradient>
   </defs>
 
-  <!-- Ball base -->
-  <circle cx="32" cy="32" r="30" fill="url(#g)" stroke="#555" stroke-width="1.5"/>
+  <!-- Outer glow ring -->
+  <circle cx="32" cy="32" r="31" fill="none" stroke="#39ff14" stroke-width="1.2" opacity="0.5"/>
 
-  <!-- Black patches clipped to ball shape -->
-  <g clip-path="url(#c)" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="0.5" stroke-linejoin="round">
+  <!-- Ball base -->
+  <circle cx="32" cy="32" r="28" fill="url(#bg)" stroke="#39ff14" stroke-width="1.8"/>
+
+  <!-- Neon green patches clipped to ball -->
+  <g clip-path="url(#c)" fill="#39ff14" fill-opacity="0.18" stroke="#39ff14" stroke-width="1" stroke-linejoin="round" stroke-opacity="0.7">
     <!-- Center top pentagon -->
-    <polygon points="32,5 45.5,15 40.5,30 23.5,30 18.5,15"/>
-    <!-- Top-right pentagon (partial) -->
-    <polygon points="45.5,15 59,5 66,20 56,31 40.5,30"/>
-    <!-- Right pentagon (partial) -->
-    <polygon points="56,31 66,20 66,44 57,52 45,43"/>
-    <!-- Bottom-right pentagon (partial) -->
-    <polygon points="45,43 57,52 51,64 37,64 32,53"/>
-    <!-- Bottom-left pentagon (partial) -->
-    <polygon points="32,53 19,64 9,56 10,42 24,43"/>
-    <!-- Left pentagon (partial) -->
-    <polygon points="24,43 10,42 2,30 8,19 23.5,30"/>
-    <!-- Top-left pentagon (partial) -->
-    <polygon points="18.5,15 8,19 2,5 15,0 32,5"/>
+    <polygon points="32,6 44,15 39,28 25,28 20,15"/>
+    <!-- Top-right -->
+    <polygon points="44,15 56,7 62,21 53,31 39,28"/>
+    <!-- Right -->
+    <polygon points="53,31 62,21 62,43 54,51 43,42"/>
+    <!-- Bottom-right -->
+    <polygon points="43,42 54,51 48,62 35,62 32,52"/>
+    <!-- Bottom-left -->
+    <polygon points="32,52 20,62 14,53 16,41 27,42"/>
+    <!-- Left -->
+    <polygon points="27,42 16,41 2,30 9,19 25,28"/>
+    <!-- Top-left -->
+    <polygon points="20,15 9,19 3,7 16,2 32,6"/>
   </g>
 
   <!-- Ball outline -->
-  <circle cx="32" cy="32" r="30" fill="none" stroke="#555" stroke-width="1.5"/>
+  <circle cx="32" cy="32" r="28" fill="none" stroke="#39ff14" stroke-width="1.8"/>
 </svg>
