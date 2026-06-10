@@ -10,7 +10,7 @@ use yii\grid\GridView;
 /** @var frontend\models\TipoInfraccionSearch $searchModel */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
-$this->title = 'Tipo Infraccions';
+$this->title = 'Infracciones';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="tipo-infraccion-index">
@@ -18,7 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Create Tipo Infraccion', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Nueva Infraccion', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
 
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
@@ -27,7 +27,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
+            //['class' => 'yii\grid\SerialColumn'],
 
             'id',
             'nombre',
