@@ -12,37 +12,32 @@ use yii\widgets\ActiveForm;
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'nombre')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'razon_social')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'cuit_cuil')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'zona')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'direccion')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'telefono')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'email')->textInput(['maxlength' => true]) ?>
-
-    <?php // $form->field($model, 'presidente')->textInput(['maxlength' => true]) ?>
-
-    <?php // $form->field($model, 'estadio')->textInput(['maxlength' => true]) ?>
-
-    <?php // $form->field($model, 'anio_fundacion')->textInput() ?>
-
-    <?php // $form->field($model, 'logo')->textInput(['maxlength' => true]) ?>
-
-    <?php // $form->field($model, 'instagram')->textInput(['maxlength' => true]) ?>
-
-    <?php // $form->field($model, 'facebook')->textInput(['maxlength' => true]) ?>
-
-    <?php // $form->field($model, 'color_primario')->textInput(['maxlength' => true]) ?>
-
-    <?php // $form->field($model, 'color_secundario')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'activo')->textInput() ?>
+    <div class="row">
+        <div class="col-md-6">
+            <?= $form->field($model, 'nombre')->textInput(['maxlength' => true]) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'razon_social')->textInput(['maxlength' => true]) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'cuit_cuil')->textInput(['maxlength' => true]) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'zona')->textInput(['maxlength' => true]) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'direccion')->textInput(['maxlength' => true]) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'telefono')->textInput(['maxlength' => true]) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'email')->textInput(['maxlength' => true]) ?>
+        </div>
+        <div class="col-md-6">
+            <?= $form->field($model, 'activo')->textInput() ?>
+        </div>
+    </div>
 
     <div class="form-group">
         <?= Html::submitButton('Guardar', ['class' => 'btn btn-success']) ?>

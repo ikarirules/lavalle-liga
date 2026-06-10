@@ -24,20 +24,26 @@ $ajaxUrl  = Url::to(['informe-arbitral/jugadores-por-partido']);
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <!-- CABECERA -->
-    <?= $form->field($model, 'partido_id')->dropDownList($partidosOptions, ['prompt' => 'Seleccionar partido...', 'id' => 'partido-selector']) ?>
-
-    <?php if ($isArbitro): ?>
-        <?= $form->field($model, 'arbitro_id')->hiddenInput()->label(false) ?>
-        <div class="form-group">
-            <label class="control-label"><?= $model->getAttributeLabel('arbitro_id') ?></label>
-            <p class="form-control-static"><?= Html::encode(\Yii::$app->user->identity->username) ?></p>
+    <!-- CABECERA: 3 columnas responsive -->
+    <div class="row">
+        <div class="col-md-4">
+            <?= $form->field($model, 'partido_id')->dropDownList($partidosOptions, ['prompt' => 'Seleccionar partido...', 'id' => 'partido-selector']) ?>
         </div>
-    <?php else: ?>
-        <?= $form->field($model, 'arbitro_id')->dropDownList($arbitrosOptions, ['prompt' => 'Seleccionar árbitro...']) ?>
-    <?php endif; ?>
-
-    <?= $form->field($model, 'asistente_id')->dropDownList($arbitrosOptions, ['prompt' => 'Seleccionar asistente...']) ?>
+        <div class="col-md-4">
+            <?php if ($isArbitro): ?>
+                <?= $form->field($model, 'arbitro_id')->hiddenInput()->label(false) ?>
+                <div class="form-group">
+                    <label class="control-label"><?= $model->getAttributeLabel('arbitro_id') ?></label>
+                    <p class="form-control-static"><?= Html::encode(\Yii::$app->user->identity->username) ?></p>
+                </div>
+            <?php else: ?>
+                <?= $form->field($model, 'arbitro_id')->dropDownList($arbitrosOptions, ['prompt' => 'Seleccionar árbitro...']) ?>
+            <?php endif; ?>
+        </div>
+        <div class="col-md-4">
+            <?= $form->field($model, 'asistente_id')->dropDownList($arbitrosOptions, ['prompt' => 'Seleccionar asistente...']) ?>
+        </div>
+    </div>
 
     <?= $form->field($model, 'observaciones')->textarea(['rows' => 4]) ?>
 
@@ -58,7 +64,7 @@ $ajaxUrl  = Url::to(['informe-arbitral/jugadores-por-partido']);
         </thead>
         <tbody id="goles-body"></tbody>
     </table>
-    <button type="button" class="btn btn-default btn-sm" id="btn-add-gol" disabled>
+    <button type="button" class="btn btn-success btn-sm" id="btn-add-gol" disabled>
         + Agregar gol
     </button>
 
@@ -79,7 +85,7 @@ $ajaxUrl  = Url::to(['informe-arbitral/jugadores-por-partido']);
         </thead>
         <tbody id="infracciones-body"></tbody>
     </table>
-    <button type="button" class="btn btn-default btn-sm" id="btn-add-infraccion" disabled>
+    <button type="button" class="btn btn-warning btn-sm" id="btn-add-infraccion" disabled>
         + Agregar infracción
     </button>
 

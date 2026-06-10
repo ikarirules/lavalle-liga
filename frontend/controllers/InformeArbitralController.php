@@ -33,7 +33,7 @@ class InformeArbitralController extends Controller
                             'roles' => ['miembro_liga', 'admin_liga'],
                         ],
                         [
-                            'actions' => ['view'],
+                            'actions' => ['view', 'pdf'],
                             'allow' => true,
                             'roles' => ['arbitro', 'miembro_liga', 'admin_liga'],
                         ],
@@ -78,6 +78,14 @@ class InformeArbitralController extends Controller
     public function actionView($id)
     {
         return $this->render('view', [
+            'model' => $this->findModel($id),
+        ]);
+    }
+
+    public function actionPdf($id)
+    {
+        $this->layout = false;
+        return $this->render('pdf', [
             'model' => $this->findModel($id),
         ]);
     }

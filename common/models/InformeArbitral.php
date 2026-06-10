@@ -79,4 +79,9 @@ class InformeArbitral extends \yii\db\ActiveRecord
     {
         return $this->hasMany(InformeDetalle::class, ['informe_id' => 'id']);
     }
+
+    public function getGoles()
+    {
+        return $this->hasMany(InformeGol::class, ['informe_id' => 'id']);
+    }
 }

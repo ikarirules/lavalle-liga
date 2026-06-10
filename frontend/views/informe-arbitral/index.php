@@ -40,6 +40,16 @@ $this->params['breadcrumbs'][] = $this->title;
             //'updated_at',
             [
                 'class' => ActionColumn::className(),
+                'template' => '{view} {update} {pdf} {delete}',
+                'buttons' => [
+                    'pdf' => function ($url, InformeArbitral $model) {
+                        return Html::a(
+                            '<i class="bi bi-file-earmark-arrow-down"></i>',
+                            Url::toRoute(['pdf', 'id' => $model->id]),
+                            ['title' => 'Descargar informe', 'target' => '_blank', 'data-pjax' => '0']
+                        );
+                    },
+                ],
                 'urlCreator' => function ($action, InformeArbitral $model, $key, $index, $column) {
                     return Url::toRoute([$action, 'id' => $model->id]);
                  }
