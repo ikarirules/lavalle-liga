@@ -36,7 +36,7 @@ class PartidosController extends Controller
                         [
                             'actions' => ['create', 'update'],
                             'allow' => true,
-                            'roles' => ['arbitro', 'directivo', 'miembro_liga', 'admin_liga'],
+                            'roles' => ['directivo', 'miembro_liga', 'admin_liga'],
                         ],
                         [
                             'actions' => ['delete'],

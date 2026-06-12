@@ -264,6 +264,12 @@ class InformeArbitralController extends Controller
     {
         $model = $this->findModel($id);
 
+        if (Yii::$app->user->can('arbitro') && !Yii::$app->user->can('admin_liga')) {
+            if ($model->arbitro_id !== Yii::$app->user->id) {
+                throw new \yii\web\ForbiddenHttpException('Solo podés editar tus propios informes.');
+            }
+        }
+
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
         }

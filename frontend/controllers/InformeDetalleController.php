@@ -111,6 +111,13 @@ class InformeDetalleController extends Controller
     {
         $model = $this->findModel($id);
 
+        if (Yii::$app->user->can('arbitro') && !Yii::$app->user->can('admin_liga')) {
+            $informe = \common\models\InformeArbitral::findOne($model->informe_id);
+            if (!$informe || $informe->arbitro_id !== Yii::$app->user->id) {
+                throw new \yii\web\ForbiddenHttpException('Solo podés editar detalles de tus propios informes.');
+            }
+        }
+
         if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);
         }
