@@ -5,6 +5,8 @@ use yii\helpers\Html;
 /** @var yii\web\View $this */
 /** @var common\models\User $user */
 
+Yii::$app->urlManager->hostInfo = 'https://ligadeportivalavalle.com';
+Yii::$app->urlManager->baseUrl = '';
 $resetLink = Yii::$app->urlManager->createAbsoluteUrl(['site/reset-password', 'token' => $user->password_reset_token]);
 $this->title = 'Recuperación de contraseña';
 ?>
