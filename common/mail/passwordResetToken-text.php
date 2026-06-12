@@ -5,8 +5,18 @@
 
 $resetLink = Yii::$app->urlManager->createAbsoluteUrl(['site/reset-password', 'token' => $user->password_reset_token]);
 ?>
-Hello <?= $user->username ?>,
+Hola <?= $user->username ?>,
 
-Follow the link below to reset your password:
+Recibimos una solicitud para restablecer la contraseña de tu cuenta en la Liga Deportiva de Lavalle.
+
+Para crear una nueva contraseña, ingresá al siguiente enlace:
 
 <?= $resetLink ?>
+
+Este enlace expirará en 24 horas.
+
+Si no solicitaste restablecer tu contraseña, podés ignorar este correo.
+
+---
+Liga Deportiva de Lavalle - Mendoza, Argentina
+Este es un mensaje automático, por favor no respondas este correo.

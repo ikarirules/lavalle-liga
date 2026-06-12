@@ -38,7 +38,7 @@ function buildSelect(string $id, ?int $valorActual, array $opts): string {
 <div class="lista-partido-view">
 
     <h2><?= Html::encode($this->title) ?></h2>
-    <p class="text-muted">
+    <p>
         <?php if ($partido->fecha): ?>
             <strong>Fecha #<?= $partido->fecha->numero_fecha ?></strong> &mdash;
         <?php endif; ?>
@@ -125,11 +125,11 @@ function buildSelect(string $id, ?int $valorActual, array $opts): string {
                 </th>
                 <th></th>
             </tr>
-            <tr>
-                <th>Jugador Local</th>
-                <th style="width:90px">Remera</th>
-                <th>Jugador Visitante</th>
-                <th style="width:90px">Remera</th>
+            <tr class="table-active">
+                <th class="bg-primary text-white">Jugador Local</th>
+                <th class="bg-primary text-white" style="width:90px">Remera</th>
+                <th class="bg-secondary text-white">Jugador Visitante</th>
+                <th class="bg-secondary text-white" style="width:90px">Remera</th>
                 <th style="width:60px"></th>
             </tr>
         </thead>

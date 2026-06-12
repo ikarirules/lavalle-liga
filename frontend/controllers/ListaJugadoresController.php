@@ -277,18 +277,28 @@ class ListaJugadoresController extends Controller
         $numeroFecha = $partido->fecha ? 'Fecha #' . $partido->fecha->numero_fecha . ' — ' : '';
 
         // Título
-        $html .= '<tr><td colspan="4" class="titulo">' . $numeroFecha . 'Partido #' . $partido_id . '</td></tr>';
-        $html .= '<tr><td colspan="4" class="subtitulo">Categoría: ' . htmlspecialchars($partido->categoria)
+        $html .= '<tr><td colspan="8" class="titulo">' . $numeroFecha . 'Partido #' . $partido_id . '</td></tr>';
+        $html .= '<tr><td colspan="8" class="subtitulo">Categoría: ' . htmlspecialchars($partido->categoria)
               . ' &nbsp;|&nbsp; ' . htmlspecialchars($localNombre)
               . ' vs ' . htmlspecialchars($visitanteNombre) . '</td></tr>';
-        $html .= '<tr><td colspan="4"></td></tr>';
+        $html .= '<tr><td colspan="8" style="padding:2px"></td></tr>';
 
-        // Encabezados
+        // Encabezados de equipo
         $html .= '<tr>'
-              . '<th class="th-local">Jugador Local</th>'
+              . '<th colspan="4" class="th-local">' . htmlspecialchars($localNombre) . '</th>'
+              . '<th colspan="4" class="th-visit">' . htmlspecialchars($visitanteNombre) . '</th>'
+              . '</tr>';
+
+        // Encabezados de columna
+        $html .= '<tr>'
+              . '<th class="th-sub">Jugador</th>'
               . '<th class="th-sub">Remera</th>'
-              . '<th class="th-visit">Jugador Visitante</th>'
+              . '<th class="th-sub">DNI</th>'
+              . '<th class="th-sub">Firma</th>'
+              . '<th class="th-sub-v">Jugador</th>'
               . '<th class="th-sub-v">Remera</th>'
+              . '<th class="th-sub-v">DNI</th>'
+              . '<th class="th-sub-v">Firma</th>'
               . '</tr>';
 
         // Filas de datos
@@ -298,6 +308,8 @@ class ListaJugadoresController extends Controller
 
             $lRemera = $l ? ($l->remera === 0 ? 'DT' : ($l->remera ?? '')) : '';
             $vRemera = $v ? ($v->remera === 0 ? 'DT' : ($v->remera ?? '')) : '';
+            $lDni    = ($l && $l->jugador && $lRemera !== 'DT') ? $l->jugador->dni : '';
+            $vDni    = ($v && $v->jugador && $vRemera !== 'DT') ? $v->jugador->dni : '';
 
             $esdt  = ($lRemera === 'DT' || $vRemera === 'DT');
             $clase = $esdt ? 'dt-row' : ($i % 2 === 0 ? '' : 'fila-par');
@@ -305,8 +317,12 @@ class ListaJugadoresController extends Controller
             $html .= "<tr class=\"{$clase}\">"
                   . '<td>' . htmlspecialchars($l && $l->jugador ? $l->jugador->nombre : '') . '</td>'
                   . '<td style="text-align:center">' . htmlspecialchars((string)$lRemera) . '</td>'
+                  . '<td style="text-align:center">' . htmlspecialchars($lDni) . '</td>'
+                  . '<td style="min-width:80px">&nbsp;</td>'
                   . '<td>' . htmlspecialchars($v && $v->jugador ? $v->jugador->nombre : '') . '</td>'
                   . '<td style="text-align:center">' . htmlspecialchars((string)$vRemera) . '</td>'
+                  . '<td style="text-align:center">' . htmlspecialchars($vDni) . '</td>'
+                  . '<td style="min-width:80px">&nbsp;</td>'
                   . '</tr>';
         }
 
