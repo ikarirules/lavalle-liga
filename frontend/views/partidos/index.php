@@ -17,9 +17,11 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <h1><?= Html::encode($this->title) ?></h1>
 
+    <?php if (Yii::$app->user->can('directivo') || Yii::$app->user->can('miembro_liga')): ?>
     <p>
         <?= Html::a('Crear Partidos', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
+    <?php endif; ?>
 
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
@@ -78,6 +80,10 @@ $this->params['breadcrumbs'][] = $this->title;
                             'data' => ['confirm' => '¿Eliminar este partido?', 'method' => 'post'],
                         ]);
                     },
+                ],
+                'visibleButtons' => [
+                    'update' => Yii::$app->user->can('directivo') || Yii::$app->user->can('miembro_liga'),
+                    'delete' => Yii::$app->user->can('admin_liga'),
                 ],
                 'contentOptions' => ['style' => 'white-space:nowrap'],
             ],
