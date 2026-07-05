@@ -22,8 +22,13 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'sancion_fechas_max')->textInput() ?>
 
+    <?= $form->field($model, 'genera_multa')->checkbox() ?>
+
+    <?= $form->field($model, 'monto_multa')->textInput(['type' => 'number', 'step' => '0.01', 'min' => '0'])
+        ->hint('Dejar vacío si no genera multa económica.') ?>
+
     <div class="form-group">
-        <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
+        <?= Html::submitButton('Guardar', ['class' => 'btn btn-success']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

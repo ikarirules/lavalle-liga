@@ -120,6 +120,10 @@ AppAsset::register($this);
             $menuItems[] = ['label' => 'Informes', 'url' => ['/informe-arbitral/index']];
         }
 
+        if ($user->can('directivo') || $user->can('miembro_liga') || $user->can('admin_liga')) {
+            $menuItems[] = ['label' => 'Multas', 'url' => ['/multa/index']];
+        }
+
         if ($user->can('miembro_liga') || $user->can('admin_liga')) {
             $menuItems[] = ['label' => 'Categorías', 'url' => ['/categoria/index']];
         }

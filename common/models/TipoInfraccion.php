@@ -13,6 +13,8 @@ use Yii;
  * @property string|null $sancion_descripcion
  * @property int|null $sancion_fechas_min
  * @property int|null $sancion_fechas_max
+ * @property int $genera_multa
+ * @property float|null $monto_multa
  */
 class TipoInfraccion extends \yii\db\ActiveRecord
 {
@@ -32,10 +34,12 @@ class TipoInfraccion extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['descripcion', 'sancion_descripcion', 'sancion_fechas_min', 'sancion_fechas_max'], 'default', 'value' => null],
+            [['descripcion', 'sancion_descripcion', 'sancion_fechas_min', 'sancion_fechas_max', 'monto_multa'], 'default', 'value' => null],
             [['nombre'], 'required'],
             [['descripcion'], 'string'],
             [['sancion_fechas_min', 'sancion_fechas_max'], 'integer'],
+            [['genera_multa'], 'integer'],
+            [['monto_multa'], 'number'],
             [['nombre', 'sancion_descripcion'], 'string', 'max' => 100],
         ];
     }
@@ -49,6 +53,8 @@ class TipoInfraccion extends \yii\db\ActiveRecord
             'sancion_descripcion' => 'Sanción Orientativa',
             'sancion_fechas_min' => 'Fechas Mín.',
             'sancion_fechas_max' => 'Fechas Máx.',
+            'genera_multa'       => 'Genera Multa',
+            'monto_multa'        => 'Monto Multa ($)',
         ];
     }
 

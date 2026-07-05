@@ -354,7 +354,11 @@ class ListaJugadoresController extends Controller
         $insertados = 0;
 
         foreach ([$partido->club_local_id, $partido->club_visitante_id] as $clubId) {
-            $q = Jugador::find()->where(['club_id' => $clubId]);
+            $q = Jugador::find()->where([
+                'or',
+                ['and', ['club_id' => $clubId], ['club_pase_id' => null]],
+                ['club_pase_id' => $clubId],
+            ]);
             if ($catId) {
                 $q->andWhere(['categoria_id' => $catId]);
             }
@@ -408,7 +412,11 @@ class ListaJugadoresController extends Controller
             $buildList = function ($clubId) {
                 $jugadores = Jugador::find()
                     ->with('categoria')
-                    ->where(['club_id' => $clubId])
+                    ->where([
+                        'or',
+                        ['and', ['club_id' => $clubId], ['club_pase_id' => null]],
+                        ['club_pase_id' => $clubId],
+                    ])
                     ->orderBy('nombre')
                     ->all();
                 return array_map(function ($j) {

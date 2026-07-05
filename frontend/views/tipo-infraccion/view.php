@@ -35,6 +35,17 @@ $this->params['breadcrumbs'][] = $this->title;
             'sancion_descripcion',
             'sancion_fechas_min',
             'sancion_fechas_max',
+            [
+                'label'  => 'Genera Multa',
+                'format' => 'raw',
+                'value'  => $model->genera_multa
+                    ? '<span class="badge bg-warning text-dark">Sí</span>'
+                    : '<span class="badge bg-secondary">No</span>',
+            ],
+            [
+                'attribute' => 'monto_multa',
+                'value'     => $model->monto_multa !== null ? '$ ' . number_format($model->monto_multa, 2, ',', '.') : '—',
+            ],
         ],
     ]) ?>
 

@@ -772,3 +772,166 @@ frontend/views/partidos/create.php y update.php:
   en el futuro (hoy son generales/anuales).
 
 ====================================================
+
+====================================================
+  BITÁCORA DE DESARROLLO — 05/07/2026
+====================================================
+
+CONTEXTO
+--------
+Dos correcciones/mejoras: fix en listas de jugadores
+para contemplar jugadores con pase (prestados), y nuevo
+módulo completo de multas con historial y reincidencia.
+
+
+----------------------------------------------------
+26. FIX — JUGADORES CON PASE EN LISTAS DE PARTIDO
+----------------------------------------------------
+Problema: al poblar la lista de un partido, los jugadores
+prestados (club_pase_id ≠ null) no aparecían en el club
+al que fueron prestados, y sí seguían apareciendo en el
+club de origen.
+
+Causa: la consulta filtraba solo por club_id = $clubId,
+ignorando club_pase_id.
+
+Solución — lógica "jugadores elegibles de un club":
+  - Propios activos: club_id = X AND club_pase_id IS NULL
+  - Prestados al club: club_pase_id = X
+
+Archivos modificados:
+  frontend/controllers/ListaJugadoresController.php
+    - actionPoblarLista(): query cambiada a OR con las
+      dos condiciones anteriores.
+    - getCreateData() → $buildList(): misma corrección
+      para el selector manual en el formulario de alta.
+
+
+----------------------------------------------------
+27. MÓDULO MULTAS — NUEVO
+----------------------------------------------------
+
+MOTIVACIÓN:
+  Las suspensiones se levantaban editando el informe
+  directamente. Se necesitaba un flujo formal:
+  infracción → multa → pago → levantamiento de suspensión,
+  con historial para detectar reincidencia.
+
+MIGRACIONES:
+  m260705_100000_add_multa_fields_to_tipo_infraccion.php
+    Agrega a tipo_infraccion:
+      genera_multa TINYINT(1) NOT NULL DEFAULT 0
+      monto_multa  DECIMAL(10,2) NULL
+
+  m260705_100001_create_multa_table.php
+    Nueva tabla multa:
+      id, jugador_id (FK), informe_detalle_id (FK),
+      monto DECIMAL(10,2), pagado TINYINT(1) DEFAULT 0,
+      fecha_pago DATE NULL, observaciones VARCHAR(255) NULL,
+      created_at, updated_at, created_by, updated_by
+    FK: fk_multa_jugador, fk_multa_informe_detalle
+
+  Comando: php yii migrate (ya aplicadas)
+
+MODELO — common/models/Multa.php (nuevo):
+  Behaviors: TimestampBehavior, BlameableBehavior.
+  Relaciones: getJugador(), getInformeDetalle().
+  getReincidencia(): cuenta multas previas del jugador
+    (no cuenta la instancia actual).
+  contarPorJugador(int $jugadorId): static, para uso
+    antes de guardar (sin instancia creada).
+
+MODELO — common/models/TipoInfraccion.php (actualizado):
+  - @property genera_multa, monto_multa agregados.
+  - rules(): integer para genera_multa, number para
+    monto_multa.
+  - attributeLabels() actualizados.
+
+SEARCH — frontend/models/MultaSearch.php (nuevo):
+  Campos de búsqueda: jugador_id, pagado, club_id,
+  jugador_nombre.
+  joinWith: jugador.club, informeDetalle.tipoInfraccion.
+
+INTEGRACIÓN EN INFORME ARBITRAL:
+  frontend/controllers/InformeArbitralController.php
+  Al guardar una infracción, si tipo->genera_multa = 1
+  y tipo->monto_multa > 0, se crea automáticamente
+  un registro en multa. Todo dentro de la transacción
+  existente (rollback si falla).
+  use common\models\Multa agregado.
+
+CONTROLADOR — frontend/controllers/MultaController.php (nuevo):
+  Acceso: directivo, miembro_liga, admin_liga.
+  actionIndex(): listado con filtros (club, jugador, estado).
+  actionView($id): detalle + historial completo del jugador
+    (reincidencia).
+  actionMarcarPagada($id) [POST]: marca pagado=1,
+    fecha_pago=hoy; si el jugador sigue suspendido →
+    resetea numero_fecha_suspension=null y
+    cant_fechas_suspension=0. Flash de confirmación.
+  actionDesmarcarPagada($id) [POST]: revierte a pagado=0.
+
+VISTAS (frontend/views/multa/):
+  index.php:
+    - Filtros: club, nombre jugador, estado (pagada/pendiente).
+    - GridView con columnas: jugador, club, infracción,
+      monto, reincidencia (badge con conteo previo),
+      estado (badge rojo/verde), fecha_pago, acciones.
+    - Acciones inline: "Marcar pagada" (con confirm) o
+      "Revertir" según estado.
+
+  view.php:
+    - DetailView con jugador, club, infracción, partido
+      de origen, monto, estado, fecha_pago, observaciones.
+    - Botón "Marcar pagada" o "Revertir" según estado.
+    - Tabla de historial: todas las multas previas del
+      jugador con infracción, monto, estado, fecha_pago.
+    - Si no hay antecedentes: "Sin antecedentes previos".
+
+VISTAS TIPO INFRACCIÓN (actualizadas):
+  frontend/views/tipo-infraccion/_form.php:
+    - Nuevos campos genera_multa (checkbox) y monto_multa
+      (number input, step 0.01).
+  frontend/views/tipo-infraccion/view.php:
+    - Nuevas filas: "Genera Multa" (badge) y "Monto Multa".
+
+MENÚ:
+  frontend/views/layouts/main.php:
+    - Ítem "Multas" visible para directivo, miembro_liga,
+      admin_liga.
+
+FLUJO COMPLETO:
+  1. En /tipo-infraccion: tildar "Genera Multa" y poner
+     monto en los tipos que correspondan (ej: tarjeta roja).
+  2. Árbitro carga el informe → multa se genera sola.
+  3. Directivo/miembro_liga entra a /multa → filtra
+     pendientes → "Marcar pagada" → suspensión levantada.
+
+
+----------------------------------------------------
+28. PENDIENTE / A CONSULTAR (actualizado)
+----------------------------------------------------
+- Configurar genera_multa y monto_multa en los tipos
+  de infracción existentes (tarjeta roja, etc.).
+
+- Informe arbitral — actionUpdate: cargar goles e
+  infracciones existentes para edición.
+
+- Informe arbitral — view: mostrar goles,
+  infracciones y suspensiones aplicadas.
+
+- Lista de buena fe: queda para una próxima sesión.
+
+- Configurar rangos de fecha en cada categoría desde
+  /categoria/index.
+
+- Validación server-side: cruzar fecha_nacimiento del
+  jugador con el rango de su categoría asignada.
+
+- QR por jugador: pendiente para más adelante.
+
+- Completar datos migrados desde user:
+  Buscar dni LIKE 'TEMP-%' y completar nombre, DNI,
+  categoría y fecha de nacimiento.
+
+====================================================
