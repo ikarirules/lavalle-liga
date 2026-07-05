@@ -24,7 +24,7 @@ class JugadorController extends Controller
                         [
                             'actions' => ['index', 'view', 'suggest'],
                             'allow'   => true,
-                            'roles'   => ['jugador', 'arbitro', 'directivo', 'miembro_liga', 'admin_liga'],
+                            'roles'   => ['?', '@'],
                         ],
                         [
                             'actions' => ['create', 'update'],

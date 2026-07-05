@@ -100,6 +100,9 @@ AppAsset::register($this);
 
     $menuItems = [];
 
+    // --- Visible también en modo deslogueado ---
+    $menuItems[] = ['label' => 'Jugadores', 'url' => ['/jugador/index']];
+
     if (!$user->isGuest) {
 
         // --- COMPETENCIA (todos los usuarios autenticados) ---
@@ -107,7 +110,6 @@ AppAsset::register($this);
         $menuItems[] = ['label' => 'Fechas',    'url' => ['/fechas/index']];
         $menuItems[] = ['label' => 'Partidos',  'url' => ['/partidos/index']];
         $menuItems[] = ['label' => 'Clubes',    'url' => ['/club/index']];
-        $menuItems[] = ['label' => 'Jugadores', 'url' => ['/jugador/index']];
 
         if ($user->can('arbitro') || $user->can('directivo') || $user->can('miembro_liga') || $user->can('admin_liga')) {
             $menuItems[] = ['label' => 'Listas', 'url' => ['/lista-jugadores/index']];

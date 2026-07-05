@@ -245,6 +245,20 @@ class ListaJugadoresController extends Controller
         $visitanteNombre = $partido->clubVisitante ? $partido->clubVisitante->nombre : 'Visitante';
         $totalFilas      = max(count($locales), count($visitantes));
 
+        // Directivos = jugadores con categoría "Directivo", del club local y visitante
+        $directivosLocal = Jugador::find()
+            ->joinWith('categoria', true)
+            ->where(['categoria.nombre' => 'Directivo', 'jugador.club_id' => $partido->club_local_id])
+            ->orderBy('jugador.nombre')
+            ->all();
+        $directivosVisitante = Jugador::find()
+            ->joinWith('categoria', true)
+            ->where(['categoria.nombre' => 'Directivo', 'jugador.club_id' => $partido->club_visitante_id])
+            ->orderBy('jugador.nombre')
+            ->all();
+        $directivosLocalNombres     = implode(', ', ArrayHelper::getColumn($directivosLocal, 'nombre'));
+        $directivosVisitanteNombres = implode(', ', ArrayHelper::getColumn($directivosVisitante, 'nombre'));
+
         $filename = 'lista_partido_' . $partido_id . '_'
             . preg_replace('/\s+/', '_', $localNombre) . '_vs_'
             . preg_replace('/\s+/', '_', $visitanteNombre) . '.xls';
@@ -258,10 +272,28 @@ class ListaJugadoresController extends Controller
         $html  = '<html xmlns:o="urn:schemas-microsoft-com:office:office"';
         $html .= ' xmlns:x="urn:schemas-microsoft-com:office:excel">';
         $html .= '<head><meta charset="UTF-8">';
+        // Configuración de página de Excel: horizontal, ajustada a 1 hoja A4 de ancho
+        $html .= '<!--[if gte mso 9]><xml>
+            <x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+            <x:Name>Lista</x:Name>
+            <x:WorksheetOptions>
+                <x:PageSetup>
+                    <x:Layout x:Orientation="Landscape"/>
+                    <x:PageMargins x:Bottom="0.5" x:Left="0.3" x:Right="0.3" x:Top="0.5"/>
+                </x:PageSetup>
+                <x:Print>
+                    <x:FitWidth>1</x:FitWidth>
+                    <x:FitHeight>0</x:FitHeight>
+                    <x:ValidPrinterInfo/>
+                </x:Print>
+                <x:DoNotDisplayGridlines/>
+            </x:WorksheetOptions>
+            </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook>
+        </xml><![endif]-->';
         $html .= '<style>
             body  { font-family: Arial, sans-serif; font-size: 11pt; }
-            table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1px solid #999; padding: 4px 8px; }
+            table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+            th, td { border: 1px solid #999; padding: 4px 8px; overflow: hidden; }
             .titulo   { font-size: 14pt; font-weight: bold; background: #1a1a2e; color: #fff; }
             .subtitulo{ font-size: 10pt; background: #e8e8e8; }
             .th-local { background: #1565C0; color: #fff; font-weight: bold; text-align: center; }
@@ -273,6 +305,16 @@ class ListaJugadoresController extends Controller
         </style></head><body>';
 
         $html .= '<table>';
+        $html .= '<colgroup>'
+              . '<col style="width:140pt">'
+              . '<col style="width:26pt">'
+              . '<col style="width:60pt">'
+              . '<col style="width:60pt">'
+              . '<col style="width:140pt">'
+              . '<col style="width:26pt">'
+              . '<col style="width:60pt">'
+              . '<col style="width:60pt">'
+              . '</colgroup>';
 
         $numeroFecha = $partido->fecha ? 'Fecha #' . $partido->fecha->numero_fecha . ' — ' : '';
 
@@ -281,6 +323,10 @@ class ListaJugadoresController extends Controller
         $html .= '<tr><td colspan="8" class="subtitulo">Categoría: ' . htmlspecialchars($partido->categoria)
               . ' &nbsp;|&nbsp; ' . htmlspecialchars($localNombre)
               . ' vs ' . htmlspecialchars($visitanteNombre) . '</td></tr>';
+        $html .= '<tr>'
+              . '<td colspan="4" class="subtitulo">Directivo/s: ' . htmlspecialchars($directivosLocalNombres ?: '—') . '</td>'
+              . '<td colspan="4" class="subtitulo">Directivo/s: ' . htmlspecialchars($directivosVisitanteNombres ?: '—') . '</td>'
+              . '</tr>';
         $html .= '<tr><td colspan="8" style="padding:2px"></td></tr>';
 
         // Encabezados de equipo
@@ -315,14 +361,14 @@ class ListaJugadoresController extends Controller
             $clase = $esdt ? 'dt-row' : ($i % 2 === 0 ? '' : 'fila-par');
 
             $html .= "<tr class=\"{$clase}\">"
-                  . '<td>' . htmlspecialchars($l && $l->jugador ? $l->jugador->nombre : '') . '</td>'
-                  . '<td style="text-align:center">' . htmlspecialchars((string)$lRemera) . '</td>'
-                  . '<td style="text-align:center">' . htmlspecialchars($lDni) . '</td>'
-                  . '<td style="min-width:80px">&nbsp;</td>'
-                  . '<td>' . htmlspecialchars($v && $v->jugador ? $v->jugador->nombre : '') . '</td>'
-                  . '<td style="text-align:center">' . htmlspecialchars((string)$vRemera) . '</td>'
-                  . '<td style="text-align:center">' . htmlspecialchars($vDni) . '</td>'
-                  . '<td style="min-width:80px">&nbsp;</td>'
+                  . '<td style="white-space:normal;word-wrap:break-word;font-size:9pt">' . htmlspecialchars($l && $l->jugador ? $l->jugador->nombre : '') . '</td>'
+                  . '<td style="text-align:center;white-space:nowrap">' . htmlspecialchars((string)$lRemera) . '</td>'
+                  . '<td style="text-align:center;white-space:nowrap;font-size:9pt">' . htmlspecialchars($lDni) . '</td>'
+                  . '<td>&nbsp;</td>'
+                  . '<td style="white-space:normal;word-wrap:break-word;font-size:9pt">' . htmlspecialchars($v && $v->jugador ? $v->jugador->nombre : '') . '</td>'
+                  . '<td style="text-align:center;white-space:nowrap">' . htmlspecialchars((string)$vRemera) . '</td>'
+                  . '<td style="text-align:center;white-space:nowrap;font-size:9pt">' . htmlspecialchars($vDni) . '</td>'
+                  . '<td>&nbsp;</td>'
                   . '</tr>';
         }
 
