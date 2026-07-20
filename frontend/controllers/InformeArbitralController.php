@@ -173,47 +173,9 @@ class InformeArbitralController extends Controller
             }
         }
 
-        // Fechas de los últimos 30 días y próximos 15, ordenadas por proximidad a hoy
-        $fechas = Fechas::find()
-            ->where(['between', 'fecha_programada',
-                date('Y-m-d', strtotime('-30 days')),
-                date('Y-m-d', strtotime('+15 days')),
-            ])
-            ->orderBy(new \yii\db\Expression('ABS(DATEDIFF(fecha_programada, CURDATE()))'))
-            ->all();
-
-        // Partidos agrupados por fecha (optgroups en el dropdown)
-        $partidosOptions = [];
-        foreach ($fechas as $f) {
-            $partidos = Partidos::find()
-                ->with(['clubLocal', 'clubVisitante'])
-                ->where(['fecha_id' => $f->id])
-                ->all();
-            if (empty($partidos)) continue;
-            $grupoLabel = 'Fecha ' . $f->numero_fecha . ' — ' . $f->fecha_programada;
-            foreach ($partidos as $p) {
-                $local     = $p->clubLocal     ? $p->clubLocal->nombre     : '?';
-                $visitante = $p->clubVisitante ? $p->clubVisitante->nombre : '?';
-                $partidosOptions[$grupoLabel][$p->id] = $local . ' vs ' . $visitante . ' (' . $p->categoria . ')';
-            }
-        }
-
-        $tiposOptions = ArrayHelper::map(TipoInfraccion::find()->all(), 'id', 'nombre');
-
-        $arbitroIds = \Yii::$app->db->createCommand(
-            "SELECT user_id FROM auth_assignment WHERE item_name = 'arbitro'"
-        )->queryColumn();
-
-        $arbitrosOptions = $arbitroIds
-            ? ArrayHelper::map(
-                \common\models\User::find()
-                    ->where(['id' => $arbitroIds, 'status' => \common\models\User::STATUS_ACTIVE])
-                    ->orderBy('username')
-                    ->all(),
-                'id',
-                'username'
-            )
-            : [];
+        $partidosOptions = $this->buildPartidosOptions();
+        $tiposOptions    = ArrayHelper::map(TipoInfraccion::find()->all(), 'id', 'nombre');
+        $arbitrosOptions = $this->buildArbitrosOptions();
 
         return $this->render('create', [
             'model'           => $model,
@@ -273,9 +235,10 @@ class InformeArbitralController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
+        $isArbitro = \Yii::$app->user->can('arbitro');
 
-        if (Yii::$app->user->can('arbitro') && !Yii::$app->user->can('admin_liga')) {
-            if ($model->arbitro_id !== Yii::$app->user->id) {
+        if ($isArbitro && !\Yii::$app->user->can('admin_liga')) {
+            if ($model->arbitro_id !== \Yii::$app->user->id) {
                 throw new \yii\web\ForbiddenHttpException('Solo podés editar tus propios informes.');
             }
         }
@@ -284,8 +247,16 @@ class InformeArbitralController extends Controller
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
+        $partidosOptions = $this->buildPartidosOptions($model->partido_id);
+        $tiposOptions    = ArrayHelper::map(TipoInfraccion::find()->all(), 'id', 'nombre');
+        $arbitrosOptions = $this->buildArbitrosOptions();
+
         return $this->render('update', [
-            'model' => $model,
+            'model'           => $model,
+            'partidosOptions' => $partidosOptions,
+            'isArbitro'       => $isArbitro,
+            'tiposOptions'    => $tiposOptions,
+            'arbitrosOptions' => $arbitrosOptions,
         ]);
     }
 
@@ -293,6 +264,58 @@ class InformeArbitralController extends Controller
     {
         $this->findModel($id)->delete();
         return $this->redirect(['index']);
+    }
+
+    /**
+     * Partidos sin informe arbitral cargado, agrupados por fecha (optgroups en el dropdown).
+     * Si $incluirPartidoId viene seteado, se incluye igual aunque ya tenga informe
+     * (caso edición: el propio partido del informe que se está actualizando).
+     */
+    protected function buildPartidosOptions($incluirPartidoId = null)
+    {
+        $query = Partidos::find()
+            ->alias('p')
+            ->joinWith(['fecha f'])
+            ->with(['clubLocal', 'clubVisitante'])
+            ->leftJoin('informe_arbitral ia', 'ia.partido_id = p.id')
+            ->where(['ia.id' => null]);
+
+        if ($incluirPartidoId) {
+            $query->orWhere(['p.id' => $incluirPartidoId]);
+        }
+
+        $partidos = $query
+            ->orderBy(new \yii\db\Expression('ABS(DATEDIFF(f.fecha_programada, CURDATE()))'))
+            ->all();
+
+        $partidosOptions = [];
+        foreach ($partidos as $p) {
+            $f = $p->fecha;
+            $grupoLabel = $f ? ('Fecha ' . $f->numero_fecha . ' — ' . $f->fecha_programada) : 'Sin fecha';
+            $local      = $p->clubLocal     ? $p->clubLocal->nombre     : '?';
+            $visitante  = $p->clubVisitante ? $p->clubVisitante->nombre : '?';
+            $partidosOptions[$grupoLabel][$p->id] = $local . ' vs ' . $visitante . ' (' . $p->categoria . ')';
+        }
+
+        return $partidosOptions;
+    }
+
+    protected function buildArbitrosOptions()
+    {
+        $arbitroIds = \Yii::$app->db->createCommand(
+            "SELECT user_id FROM auth_assignment WHERE item_name = 'arbitro'"
+        )->queryColumn();
+
+        return $arbitroIds
+            ? ArrayHelper::map(
+                \common\models\User::find()
+                    ->where(['id' => $arbitroIds, 'status' => \common\models\User::STATUS_ACTIVE])
+                    ->orderBy('username')
+                    ->all(),
+                'id',
+                'username'
+            )
+            : [];
     }
 
     protected function findModel($id)
