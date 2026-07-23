@@ -22,9 +22,14 @@ class JugadorController extends Controller
                     'class' => AccessControl::class,
                     'rules' => [
                         [
-                            'actions' => ['index', 'view', 'suggest'],
+                            'actions' => ['index', 'suggest'],
                             'allow'   => true,
                             'roles'   => ['?', '@'],
+                        ],
+                        [
+                            'actions' => ['view'],
+                            'allow'   => true,
+                            'roles'   => ['@'],
                         ],
                         [
                             'actions' => ['create', 'update'],
