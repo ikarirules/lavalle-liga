@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>David Diaz - CV</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+      color: #222;
+      background: #f0f0f0;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 20px auto;
+      background: #fff;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    }
+
+    /* HEADER */
+    header {
+      padding: 36px 40px 28px 40px;
+      border-bottom: 2px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    header .name-block h1 {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #111;
+      line-height: 1.1;
+    }
+
+    header .name-block p {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #555;
+      margin-top: 6px;
+    }
+
+    header .contact {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    header .contact a,
+    header .contact span {
+      font-size: 12px;
+      color: #333;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+    }
+
+    header .contact a:hover { color: #000; text-decoration: underline; }
+
+    .icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      background: #222;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* BODY */
+    .body {
+      display: flex;
+      min-height: calc(297mm - 120px);
+    }
+
+    /* LEFT SIDEBAR */
+    .sidebar {
+      width: 210px;
+      flex-shrink: 0;
+      border-right: 1px solid #ddd;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      flex: 1;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* SECTION TITLES */
+    .section-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #111;
+      border-bottom: 1.5px solid #222;
+      padding-bottom: 5px;
+      margin-bottom: 14px;
+    }
+
+    /* EDUCATION */
+    .edu-item {
+      margin-bottom: 14px;
+    }
+
+    .edu-item h4 {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #111;
+    }
+
+    .edu-item .institution {
+      font-size: 11px;
+      color: #555;
+      margin-top: 2px;
+    }
+
+    .edu-item .year {
+      font-size: 11px;
+      color: #777;
+    }
+
+    .edu-item .badge {
+      display: inline-block;
+      font-size: 10px;
+      background: #111;
+      color: #fff;
+      border-radius: 3px;
+      padding: 1px 6px;
+      margin-top: 3px;
+      font-weight: 600;
+    }
+
+    /* SKILLS */
+    .skills-group {
+      margin-bottom: 10px;
+    }
+
+    .skills-group-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .tag {
+      font-size: 10.5px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+
+    .tag-dark {
+      background: #222;
+      color: #fff;
+    }
+
+    .tag-light {
+      background: #efefef;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+
+    /* LANGUAGES */
+    .lang-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .lang-name { font-size: 12px; font-weight: 600; }
+
+    .lang-level {
+      font-size: 10px;
+      color: #666;
+      font-style: italic;
+    }
+
+    /* LINKS */
+    .link-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 7px;
+    }
+
+    .link-item a {
+      font-size: 11px;
+      color: #333;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .link-item a:hover { text-decoration: underline; color: #000; }
+
+    .link-dot {
+      width: 6px;
+      height: 6px;
+      background: #222;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ABOUT */
+    .about-text {
+      font-size: 12.5px;
+      color: #444;
+      line-height: 1.7;
+    }
+
+    /* EXPERIENCE */
+    .exp-item {
+      margin-bottom: 20px;
+    }
+
+    .exp-item:last-child { margin-bottom: 0; }
+
+    .exp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2px;
+    }
+
+    .exp-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #111;
+    }
+
+    .exp-date {
+      font-size: 11px;
+      color: #777;
+      font-style: italic;
+      white-space: nowrap;
+      margin-left: 8px;
+    }
+
+    .exp-company {
+      font-size: 11.5px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .exp-bullets {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .exp-bullets li {
+      font-size: 12px;
+      color: #333;
+      line-height: 1.5;
+      padding-left: 14px;
+      position: relative;
+    }
+
+    .exp-bullets li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: #999;
+    }
+
+    /* HIGHLIGHT bullet */
+    .exp-bullets li.highlight {
+      font-weight: 600;
+      color: #111;
+    }
+
+    .exp-bullets li.highlight::before { color: #111; }
+
+    /* PRINT */
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; box-shadow: none; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header>
+    <div class="name-block">
+      <h1>David Diaz</h1>
+      <p>Programador Full Stack</p>
+    </div>
+    <div class="contact">
+      <span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="#333"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        diaz.david1607@gmail.com
+      </span>
+      <span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="#333"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.36 11.36 0 003.55.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.36 11.36 0 00.57 3.55 1 1 0 01-.25 1.01l-2.2 2.23z"/></svg>
+        (54) 2616415824
+      </span>
+      <span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="#333"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1112 6a2.5 2.5 0 010 5.5z"/></svg>
+        Mendoza, Argentina
+      </span>
+      <!-- REEMPLAZÁ estas URLs con las tuyas -->
+      <a href="https://github.com/ikarirules" target="_blank">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="#333"><path d="M12 2A10 10 0 002 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0112 6.8c.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/></svg>
+        github.com/ikarirules
+      </a>
+      <a href="https://linkedin.com/in/david-diaz-865b74188" target="_blank">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="#0077b5"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zM9 17H6.5v-7H9v7zm-1.25-8.27A1.48 1.48 0 116.27 7.25 1.48 1.48 0 017.75 8.73zM18 17h-2.5v-3.5c0-1-.02-2.27-1.38-2.27-1.4 0-1.62 1.09-1.62 2.2V17H10v-7h2.4v1.04h.03c.34-.64 1.16-1.31 2.38-1.31 2.55 0 3.02 1.68 3.02 3.86V17z"/></svg>
+        linkedin.com/in/david-diaz-865b74188
+      </a>
+    </div>
+  </header>
+
+  <div class="body">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <!-- EDUCACION -->
+      <section>
+        <div class="section-title">Educacion</div>
+
+        <div class="edu-item">
+          <h4>Tecnico Superior en Analisis y Programacion de Sistemas</h4>
+          <div class="institution">IES N°9-024 — Lavalle, Mza</div>
+          <div class="year">2017 – 2022</div>
+          <!-- Si te recibiste, deja el badge. Si no, elimina esta linea -->
+          <span class="badge">Egresado 2022</span>
+        </div>
+
+        <div class="edu-item">
+          <h4>Programacion con PHP y MySQL — Nivel Avanzado</h4>
+          <div class="institution">UTN Facultad Regional Resistencia</div>
+          <div class="year">Ago 2023 – Oct 2023</div>
+        </div>
+
+        <div class="edu-item">
+          <h4>Armado, Reparacion y Mantenimiento de PC y Redes</h4>
+          <div class="institution">CCT Francisca Godoy Molina</div>
+          <div class="year">2016 – 2017</div>
+        </div>
+      </section>
+
+      <!-- HABILIDADES -->
+      <section>
+        <div class="section-title">Habilidades</div>
+
+        <div class="skills-group">
+          <div class="skills-group-title">Backend</div>
+          <div class="skill-tags">
+            <span class="tag tag-dark">PHP</span>
+            <span class="tag tag-dark">Yii2</span>
+            <span class="tag tag-dark">MySQL</span>
+            <span class="tag tag-light">REST APIs</span>
+          </div>
+        </div>
+
+        <div class="skills-group">
+          <div class="skills-group-title">Frontend</div>
+          <div class="skill-tags">
+            <span class="tag tag-dark">JavaScript</span>
+            <span class="tag tag-dark">HTML / CSS</span>
+            <span class="tag tag-light">AJAX</span>
+            <span class="tag tag-light">Bootstrap</span>
+          </div>
+        </div>
+
+        <div class="skills-group">
+          <div class="skills-group-title">Herramientas</div>
+          <div class="skill-tags">
+            <span class="tag tag-dark">Git</span>
+            <span class="tag tag-light">GitHub</span>
+            <span class="tag tag-light">Linux</span>
+            <span class="tag tag-light">Apache</span>
+          </div>
+        </div>
+
+        <div class="skills-group">
+          <div class="skills-group-title">Otros</div>
+          <div class="skill-tags">
+            <span class="tag tag-light">Java</span>
+            <span class="tag tag-light">Redes LAN</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- IDIOMAS -->
+      <section>
+        <div class="section-title">Idiomas</div>
+        <div class="lang-item">
+          <span class="lang-name">Espanol</span>
+          <span class="lang-level">Nativo</span>
+        </div>
+        <div class="lang-item">
+          <span class="lang-name">Ingles</span>
+          <span class="lang-level">Intermedio (B1)</span>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- ACERCA DE MI -->
+      <section>
+        <div class="section-title">Acerca de mi</div>
+        <p class="about-text">
+          Desarrollador Full Stack con mas de 3 anos de experiencia en el desarrollo y mantenimiento de aplicaciones web
+          usando PHP, Yii2 y MySQL. Me especializo en construir interfaces dinamicas e integraciones con servicios externos.
+          Disfruto resolver problemas complejos, aprendo rapido tecnologias nuevas y me desenvuelvo bien tanto trabajando
+          de forma autonoma como en equipo.
+        </p>
+      </section>
+
+      <!-- EXPERIENCIA -->
+      <section>
+        <div class="section-title">Experiencia Profesional</div>
+
+        <!-- JOB 1 - ACTUAL -->
+        <div class="exp-item">
+          <div class="exp-header">
+            <span class="exp-title">Desarrollador Full Stack</span>
+            <span class="exp-date">Nov 2021 – Actualidad</span>
+          </div>
+          <div class="exp-company">X Nativa Group</div>
+          <ul class="exp-bullets">
+            <li class="highlight">Desarrollo y mantenimiento de aplicaciones web de gestion empresarial con Yii2, PHP y MySQL.</li>
+            <li>Implementacion de vistas dinamicas con AJAX, Pjax y GridView, reduciendo tiempos de carga de pantallas criticas.</li>
+            <li>Integracion de servicios y APIs externas en entornos de servidor con restricciones de configuracion.</li>
+            <li>Participacion en todo el ciclo de vida del software: relevamiento, desarrollo, pruebas y despliegue.</li>
+            <!-- SUGERENCIA: si tenes un logro concreto (ej: cantidad de usuarios, mejora de performance), agrega una linea aqui -->
+          </ul>
+        </div>
+
+        <!-- JOB 2 -->
+        <div class="exp-item">
+          <div class="exp-header">
+            <span class="exp-title">Soporte Tecnico — Mantenimiento de Servidores</span>
+            <span class="exp-date">Jun 2020 – Dic 2020</span>
+          </div>
+          <div class="exp-company">ECI Emergencias Medicas</div>
+          <ul class="exp-bullets">
+            <li>Soporte tecnico a usuarios en hardware y software en entorno medico critico.</li>
+            <li>Instalacion y configuracion de programas y sistemas operativos.</li>
+            <li>Cableado estructurado para oficinas y armado de red local.</li>
+            <li>Mantenimiento preventivo y correctivo de equipos informaticos.</li>
+          </ul>
+        </div>
+
+        <!-- JOB 3 -->
+        <div class="exp-item">
+          <div class="exp-header">
+            <span class="exp-title">Soporte Tecnico — Administracion de BD</span>
+            <span class="exp-date">Jun 2019 – Mar 2020</span>
+          </div>
+          <div class="exp-company">Clinica San Andres</div>
+          <ul class="exp-bullets">
+            <li>Soporte tecnico a usuarios en entornos de oficina y sistemas productivos.</li>
+            <li>Administracion basica de bases de datos MySQL en entorno clinico.</li>
+            <li>Instalacion y configuracion de programas y sistemas operativos.</li>
+            <li>Mantenimiento y reparacion de equipos informaticos y redes locales.</li>
+          </ul>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+</div>
+</body>
+</html>
