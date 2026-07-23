@@ -9,7 +9,6 @@ use common\models\ListaJugadores;
 use common\models\Partidos;
 use frontend\models\ListaJugadoresSearch;
 use Yii;
-use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -230,13 +229,13 @@ class ListaJugadoresController extends Controller
         }
 
         $locales = ListaJugadores::find()
-            ->with('jugador')
+            ->with(['jugador.categoria'])
             ->where(['partido_id' => $partido_id, 'club_id' => $partido->club_local_id])
             ->orderBy(['remera' => SORT_ASC])
             ->all();
 
         $visitantes = ListaJugadores::find()
-            ->with('jugador')
+            ->with(['jugador.categoria'])
             ->where(['partido_id' => $partido_id, 'club_id' => $partido->club_visitante_id])
             ->orderBy(['remera' => SORT_ASC])
             ->all();
@@ -245,19 +244,17 @@ class ListaJugadoresController extends Controller
         $visitanteNombre = $partido->clubVisitante ? $partido->clubVisitante->nombre : 'Visitante';
         $totalFilas      = max(count($locales), count($visitantes));
 
-        // Directivos = jugadores con categoría "Directivo", del club local y visitante
-        $directivosLocal = Jugador::find()
-            ->joinWith('categoria', true)
-            ->where(['categoria.nombre' => 'Directivo', 'jugador.club_id' => $partido->club_local_id])
-            ->orderBy('jugador.nombre')
-            ->all();
-        $directivosVisitante = Jugador::find()
-            ->joinWith('categoria', true)
-            ->where(['categoria.nombre' => 'Directivo', 'jugador.club_id' => $partido->club_visitante_id])
-            ->orderBy('jugador.nombre')
-            ->all();
-        $directivosLocalNombres     = implode(', ', ArrayHelper::getColumn($directivosLocal, 'nombre'));
-        $directivosVisitanteNombres = implode(', ', ArrayHelper::getColumn($directivosVisitante, 'nombre'));
+        // Directivos = solo los jugadores con categoría "Directivo" que están cargados en esta lista
+        $esDirectivo = fn(ListaJugadores $e) => $e->jugador && $e->jugador->categoria && $e->jugador->categoria->nombre === 'Directivo';
+
+        $directivosLocalNombres = implode(', ', array_map(
+            fn($e) => $e->jugador->nombre,
+            array_filter($locales, $esDirectivo)
+        ));
+        $directivosVisitanteNombres = implode(', ', array_map(
+            fn($e) => $e->jugador->nombre,
+            array_filter($visitantes, $esDirectivo)
+        ));
 
         $filename = 'lista_partido_' . $partido_id . '_'
             . preg_replace('/\s+/', '_', $localNombre) . '_vs_'
