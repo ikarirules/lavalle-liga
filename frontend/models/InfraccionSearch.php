@@ -2,26 +2,37 @@
 
 namespace frontend\models;
 
-use common\models\Multa;
+use common\models\InformeDetalle;
+use yii\base\Model;
 use yii\data\ActiveDataProvider;
 
-class MultaSearch extends Multa
+/**
+ * Lista las infracciones a jugadores que generan multa y/o sanción de fechas
+ * (informe_detalle + tipo_infraccion), con la multa asociada si existe.
+ */
+class InfraccionSearch extends Model
 {
     public $jugador_nombre;
     public $club_id;
+    public $pagado;
 
     public function rules()
     {
         return [
-            [['jugador_id', 'pagado', 'club_id'], 'integer'],
+            [['club_id', 'pagado'], 'integer'],
             [['jugador_nombre'], 'safe'],
         ];
     }
 
     public function search(array $params): ActiveDataProvider
     {
-        $query = Multa::find()
-            ->joinWith(['jugador.club', 'informeDetalle.tipoInfraccion']);
+        $query = InformeDetalle::find()
+            ->joinWith(['jugador.club', 'tipoInfraccion', 'multa'])
+            ->andWhere(['is not', 'informe_detalle.jugador_id', null])
+            ->andWhere(['or',
+                ['tipo_infraccion.genera_multa' => 1],
+                ['>', 'tipo_infraccion.sancion_fechas_min', 0],
+            ]);
 
         $dataProvider = new ActiveDataProvider([
             'query'      => $query,
@@ -35,16 +46,12 @@ class MultaSearch extends Multa
             return $dataProvider;
         }
 
-        if ($this->jugador_id !== null && $this->jugador_id !== '') {
-            $query->andWhere(['multa.jugador_id' => $this->jugador_id]);
+        if ($this->club_id) {
+            $query->andWhere(['jugador.club_id' => $this->club_id]);
         }
 
         if ($this->pagado !== null && $this->pagado !== '') {
             $query->andWhere(['multa.pagado' => $this->pagado]);
-        }
-
-        if ($this->club_id !== null && $this->club_id !== '') {
-            $query->andWhere(['jugador.club_id' => $this->club_id]);
         }
 
         if ($this->jugador_nombre) {

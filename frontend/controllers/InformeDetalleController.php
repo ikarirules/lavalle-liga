@@ -4,6 +4,7 @@ namespace frontend\controllers;
 
 use common\models\InformeDetalle;
 use frontend\models\InformeDetalleSearch;
+use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -37,12 +38,19 @@ class InformeDetalleController extends Controller
                             'allow' => true,
                             'roles' => ['admin_liga'],
                         ],
+                        [
+                            'actions' => ['levantar-sancion', 'revertir-sancion'],
+                            'allow' => true,
+                            'roles' => ['directivo', 'miembro_liga', 'admin_liga'],
+                        ],
                     ],
                 ],
                 'verbs' => [
                     'class' => VerbFilter::class,
                     'actions' => [
-                        'delete' => ['POST'],
+                        'delete'           => ['POST'],
+                        'levantar-sancion' => ['POST'],
+                        'revertir-sancion' => ['POST'],
                     ],
                 ],
             ]
@@ -139,6 +147,32 @@ class InformeDetalleController extends Controller
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
+    }
+
+    /**
+     * Levanta (perdona) la inhabilitación asociada a esta infracción.
+     */
+    public function actionLevantarSancion($id)
+    {
+        $model = $this->findModel($id);
+        $model->sancion_levantada = 1;
+        $model->save(false);
+
+        Yii::$app->session->setFlash('success', 'Inhabilitación levantada.');
+        return $this->redirect(['/multa/index']);
+    }
+
+    /**
+     * Revierte el levantamiento: la sanción vuelve a estar vigente si su ventana de fechas no venció.
+     */
+    public function actionRevertirSancion($id)
+    {
+        $model = $this->findModel($id);
+        $model->sancion_levantada = 0;
+        $model->save(false);
+
+        Yii::$app->session->setFlash('warning', 'Inhabilitación restablecida.');
+        return $this->redirect(['/multa/index']);
     }
 
     /**

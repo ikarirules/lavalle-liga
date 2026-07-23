@@ -117,9 +117,26 @@ class Jugador extends \yii\db\ActiveRecord
     }
 
     /**
-     * Calcula si el jugador está suspendido consultando la tabla fechas.
+     * Calcula si el jugador está suspendido: por la suspensión manual (numero_fecha_suspension/
+     * cant_fechas_suspension, cargada directamente en su ficha) o por alguna sanción vigente
+     * generada desde un informe arbitral (ver InformeDetalle::getSancionVigente()).
      */
     public function getSuspendido()
+    {
+        if ($this->suspendidoManual()) {
+            return true;
+        }
+
+        foreach ($this->informeDetalles as $detalle) {
+            if ($detalle->sancionVigente) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function suspendidoManual(): bool
     {
         if (!$this->numero_fecha_suspension || !$this->cant_fechas_suspension) {
             return false;
@@ -141,6 +158,11 @@ class Jugador extends \yii\db\ActiveRecord
             ?? $fecha->fecha_programada;
 
         return date('Y-m-d') <= date('Y-m-d', strtotime($fechaEfectiva));
+    }
+
+    public function getInformeDetalles()
+    {
+        return $this->hasMany(InformeDetalle::class, ['jugador_id' => 'id']);
     }
 
     public function getCategoria()

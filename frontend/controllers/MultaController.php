@@ -5,7 +5,7 @@ namespace frontend\controllers;
 use common\models\Club;
 use common\models\Jugador;
 use common\models\Multa;
-use frontend\models\MultaSearch;
+use frontend\models\InfraccionSearch;
 use Yii;
 use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
@@ -39,7 +39,7 @@ class MultaController extends Controller
 
     public function actionIndex()
     {
-        $searchModel  = new MultaSearch();
+        $searchModel  = new InfraccionSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         $clubs    = Club::find()->orderBy('nombre')->all();
@@ -79,14 +79,7 @@ class MultaController extends Controller
         $multa->observaciones = $obs ?: $multa->observaciones;
 
         if ($multa->save(false)) {
-            // Levantar suspensión si sigue activa y fue generada por esta infracción
-            $jugador = $multa->jugador;
-            if ($jugador && $jugador->suspendido) {
-                $jugador->numero_fecha_suspension = null;
-                $jugador->cant_fechas_suspension  = 0;
-                $jugador->save(false);
-            }
-            Yii::$app->session->setFlash('success', 'Multa marcada como pagada. Suspensión levantada.');
+            Yii::$app->session->setFlash('success', 'Multa marcada como pagada.');
         } else {
             Yii::$app->session->setFlash('error', 'No se pudo guardar.');
         }

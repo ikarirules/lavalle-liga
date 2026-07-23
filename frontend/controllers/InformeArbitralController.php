@@ -2,11 +2,9 @@
 
 namespace frontend\controllers;
 
-use common\models\Fechas;
 use common\models\InformeArbitral;
 use common\models\InformeDetalle;
 use common\models\InformeGol;
-use common\models\Jugador;
 use common\models\ListaJugadores;
 use common\models\Partidos;
 use common\models\Multa;
@@ -122,9 +120,6 @@ class InformeArbitralController extends Controller
                     }
 
                     // Infracciones
-                    $partido = Partidos::findOne($model->partido_id);
-                    $fecha   = $partido ? Fechas::findOne($partido->fecha_id) : null;
-
                     foreach ($post['InformeDetalle'] ?? [] as $data) {
                         if (empty($data['tipo_infraccion_id']) || empty($data['club_id'])) continue;
                         $detalle = new InformeDetalle();
@@ -135,25 +130,16 @@ class InformeArbitralController extends Controller
                         $detalle->minuto             = !empty($data['minuto']) ? (int)$data['minuto'] : null;
                         if (!$detalle->save()) throw new \Exception('Error guardando infracción');
 
-                        // Aplicar suspensión y multa al jugador si corresponde
-                        if ($detalle->jugador_id && $fecha) {
+                        // La sanción de fechas se calcula dinámicamente desde este mismo detalle
+                        // (ver InformeDetalle::getSancionVigente()). Acá solo se genera la multa.
+                        if ($detalle->jugador_id) {
                             $tipo = TipoInfraccion::findOne($detalle->tipo_infraccion_id);
-                            if ($tipo) {
-                                $jugador = Jugador::findOne($detalle->jugador_id);
-                                if ($jugador) {
-                                    if ($tipo->sancion_fechas_min > 0) {
-                                        $jugador->numero_fecha_suspension = $fecha->numero_fecha;
-                                        $jugador->cant_fechas_suspension  = $tipo->sancion_fechas_min;
-                                        $jugador->save(false);
-                                    }
-                                    if ($tipo->genera_multa && $tipo->monto_multa > 0) {
-                                        $multa                    = new Multa();
-                                        $multa->jugador_id        = $detalle->jugador_id;
-                                        $multa->informe_detalle_id = $detalle->id;
-                                        $multa->monto             = $tipo->monto_multa;
-                                        if (!$multa->save()) throw new \Exception('Error guardando multa');
-                                    }
-                                }
+                            if ($tipo && $tipo->genera_multa && $tipo->monto_multa > 0) {
+                                $multa                      = new Multa();
+                                $multa->jugador_id          = $detalle->jugador_id;
+                                $multa->informe_detalle_id  = $detalle->id;
+                                $multa->monto               = $tipo->monto_multa;
+                                if (!$multa->save()) throw new \Exception('Error guardando multa');
                             }
                         }
                     }
