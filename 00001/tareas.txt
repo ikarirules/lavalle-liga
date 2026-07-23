@@ -15,11 +15,12 @@
 -arreglar errores en el servidor 
 -error en captcha
 ---------------------------------------------------------------
--anclar el jugador con pase al club del pase
--ver si paga la suspension quitarle las faltas
--verificar los permisos de los arbitros
--en las listas poner delegados y tecnicos
--adecuar la lista de exel
+-anclar el jugador con pase al club del pase--
+-ver si paga la suspension quitarle las faltas--
+-verificar los permisos de los arbitros--
+-en las listas poner delegados y tecnicos--
+-adecuar la lista de exel--
 -baners de publicidad
--en la vista deslogueado poder ver jugadores
--arreglar informes y detalles de informe
+-en la vista deslogueado poder ver jugadores--
+-arreglar informes y detalles de informe--
+
