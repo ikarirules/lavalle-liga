@@ -111,7 +111,14 @@ $this->title = 'Infracciones';
                     }
 
                     if ($d->tieneSancion()) {
-                        if (!$d->sancion_levantada) {
+                        if ($d->sancion_levantada) {
+                            $btns[] = Html::beginForm(['/informe-detalle/revertir-sancion', 'id' => $d->id], 'post', ['style' => 'display:inline'])
+                                . Html::submitButton('Revertir', [
+                                    'class'   => 'btn btn-sm btn-outline-danger',
+                                    'onclick' => "return confirm('¿Restablecer la inhabilitación?')",
+                                ])
+                                . Html::endForm();
+                        } elseif ($d->sancionVigente) {
                             $btns[] = Html::beginForm(['/informe-detalle/levantar-sancion', 'id' => $d->id], 'post', ['style' => 'display:inline'])
                                 . Html::submitButton('Levantar inhabilitación', [
                                     'class'   => 'btn btn-sm btn-warning',
@@ -119,12 +126,11 @@ $this->title = 'Infracciones';
                                 ])
                                 . Html::endForm();
                         } else {
-                            $btns[] = Html::beginForm(['/informe-detalle/revertir-sancion', 'id' => $d->id], 'post', ['style' => 'display:inline'])
-                                . Html::submitButton('Revertir', [
-                                    'class'   => 'btn btn-sm btn-outline-danger',
-                                    'onclick' => "return confirm('¿Restablecer la inhabilitación?')",
-                                ])
-                                . Html::endForm();
+                            $btns[] = Html::submitButton('Levantar inhabilitación', [
+                                'class'    => 'btn btn-sm btn-warning',
+                                'disabled' => true,
+                                'title'    => 'La sanción ya se cumplió por fechas, no hay nada que levantar.',
+                            ]);
                         }
                     }
 
