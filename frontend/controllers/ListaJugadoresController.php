@@ -229,13 +229,13 @@ class ListaJugadoresController extends Controller
         }
 
         $locales = ListaJugadores::find()
-            ->with(['jugador.categoria'])
+            ->with('jugador')
             ->where(['partido_id' => $partido_id, 'club_id' => $partido->club_local_id])
             ->orderBy(['remera' => SORT_ASC])
             ->all();
 
         $visitantes = ListaJugadores::find()
-            ->with(['jugador.categoria'])
+            ->with('jugador')
             ->where(['partido_id' => $partido_id, 'club_id' => $partido->club_visitante_id])
             ->orderBy(['remera' => SORT_ASC])
             ->all();
@@ -244,17 +244,9 @@ class ListaJugadoresController extends Controller
         $visitanteNombre = $partido->clubVisitante ? $partido->clubVisitante->nombre : 'Visitante';
         $totalFilas      = max(count($locales), count($visitantes));
 
-        // Directivos = solo los jugadores con categoría "Directivo" que están cargados en esta lista
-        $esDirectivo = fn(ListaJugadores $e) => $e->jugador && $e->jugador->categoria && $e->jugador->categoria->nombre === 'Directivo';
-
-        $directivosLocalNombres = implode(', ', array_map(
-            fn($e) => $e->jugador->nombre,
-            array_filter($locales, $esDirectivo)
-        ));
-        $directivosVisitanteNombres = implode(', ', array_map(
-            fn($e) => $e->jugador->nombre,
-            array_filter($visitantes, $esDirectivo)
-        ));
+        // Directivos/DT = los que se cargaron al crear el partido (dt1_local/dt2_local/dt1_visitante/dt2_visitante)
+        $directivosLocalNombres     = implode(', ', array_filter([$partido->dt1_local, $partido->dt2_local]));
+        $directivosVisitanteNombres = implode(', ', array_filter([$partido->dt1_visitante, $partido->dt2_visitante]));
 
         $filename = 'lista_partido_' . $partido_id . '_'
             . preg_replace('/\s+/', '_', $localNombre) . '_vs_'
