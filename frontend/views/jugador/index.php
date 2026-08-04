@@ -74,21 +74,19 @@ $this->params['breadcrumbs'][] = $this->title;
         },
     ];
 
-    if (!Yii::$app->user->isGuest) {
-        $columns[] = [
-            'class'      => ActionColumn::class,
-            'template'   => '{view}',
-            'urlCreator' => fn($action, $model, $key, $index, $column) =>
-                Url::toRoute([$action, 'id' => $model->id]),
-            'buttons' => [
-                'view' => fn($url) => Html::a(
-                    'Ver',
-                    $url,
-                    ['class' => 'btn btn-primary']
-                ),
-            ],
-        ];
-    }
+    $columns[] = [
+        'class'      => ActionColumn::class,
+        'template'   => '{view}',
+        'urlCreator' => fn($action, $model, $key, $index, $column) =>
+            Url::toRoute([$action, 'id' => $model->id]),
+        'buttons' => [
+            'view' => fn($url) => Html::a(
+                'Ver',
+                $url,
+                ['class' => 'btn btn-primary']
+            ),
+        ],
+    ];
     ?>
 
     <?= GridView::widget([

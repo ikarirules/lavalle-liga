@@ -38,14 +38,19 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
     <?php endif; ?>
 
+    <?php
+    $attributes = ['id', 'nombre'];
+    if (!Yii::$app->user->isGuest) {
+        $attributes[] = 'dni';
+        $attributes[] = 'fecha_nacimiento:date:Fecha de Nacimiento';
+    }
+    $attributes[] = 'numero_carnet:text:N° Carnet';
+    ?>
+
     <?= DetailView::widget([
         'model'      => $model,
         'attributes' => [
-            'id',
-            'nombre',
-            'dni',
-            'fecha_nacimiento:date:Fecha de Nacimiento',
-            'numero_carnet:text:N° Carnet',
+            ...$attributes,
             [
                 'label' => 'Categoría',
                 'value' => $model->categoria ? $model->categoria->nombre : '-',

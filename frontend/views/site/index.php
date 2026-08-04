@@ -50,8 +50,8 @@ $estadoBadge = [
 <div class="site-index pt-2">
 
     <div class="d-flex align-items-baseline gap-3 mb-3">
-        <h2 class="mb-0">Próximos partidos</h2>
-        <small class="text-muted">hasta el próximo domingo</small>
+        <h2 class="mb-0">Partidos y resultados</h2>
+        <small class="text-muted">semana actual</small>
     </div>
 
     <?php if (empty($fechas)): ?>
@@ -86,11 +86,18 @@ $estadoBadge = [
                 <?php else: ?>
                     <div class="card-body p-0">
                         <?php foreach ($fecha->partidos as $partido): ?>
+                            <?php
+                                $resultado = $partido->isEstadoJugada() ? $partido->getResultado() : null;
+                            ?>
                             <div class="partido-row">
                                 <span class="partido-cat"><?= Html::encode($partido->categoria) ?></span>
                                 <div class="partido-vs">
                                     <span class="partido-club text-end"><?= Html::encode($partido->clubLocal ? $partido->clubLocal->nombre : '—') ?></span>
-                                    <span class="partido-sep">vs</span>
+                                    <?php if ($resultado !== null): ?>
+                                        <span class="partido-sep fw-bold"><?= $resultado['local'] ?> - <?= $resultado['visitante'] ?></span>
+                                    <?php else: ?>
+                                        <span class="partido-sep">vs</span>
+                                    <?php endif; ?>
                                     <span class="partido-club"><?= Html::encode($partido->clubVisitante ? $partido->clubVisitante->nombre : '—') ?></span>
                                 </div>
                                 <div class="partido-meta">

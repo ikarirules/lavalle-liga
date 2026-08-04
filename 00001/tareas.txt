@@ -23,4 +23,11 @@
 -baners de publicidad
 -en la vista deslogueado poder ver jugadores--
 -arreglar informes y detalles de informe--
+------------------------------------------
+- volver a poner los datos de los jugadores
+-verificar puntos por categoria y por club
+-puntos 3 ganado 1empatado 0 perdido-libre
+-verificar ffrontend
+-ver fficture
+
 

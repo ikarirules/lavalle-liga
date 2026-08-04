@@ -133,6 +133,30 @@ class Partidos extends \yii\db\ActiveRecord
     }
 
     /**
+     * Marcador del partido calculado a partir del informe arbitral (informe_gol).
+     * @return array{local: int, visitante: int}|null null si todavía no hay informe cargado
+     */
+    public function getResultado()
+    {
+        $informe = $this->informeArbitral;
+        if (!$informe) {
+            return null;
+        }
+
+        $golesLocal = 0;
+        $golesVisitante = 0;
+        foreach ($informe->goles as $gol) {
+            if ($gol->club_id == $this->club_local_id) {
+                $golesLocal += $gol->cantidad;
+            } elseif ($gol->club_id == $this->club_visitante_id) {
+                $golesVisitante += $gol->cantidad;
+            }
+        }
+
+        return ['local' => $golesLocal, 'visitante' => $golesVisitante];
+    }
+
+    /**
      * column estado ENUM value labels
      * @return string[]
      */

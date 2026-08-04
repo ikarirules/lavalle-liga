@@ -76,14 +76,17 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        $today = date('Y-m-d');
         $dayOfWeek = (int)date('w'); // 0=domingo
-        $daysUntilSunday = $dayOfWeek === 0 ? 7 : 7 - $dayOfWeek;
-        $nextSunday = date('Y-m-d', strtotime("+{$daysUntilSunday} days"));
+        $diasDesdeLunes = $dayOfWeek === 0 ? 6 : $dayOfWeek - 1;
+        $lunes = date('Y-m-d', strtotime("-{$diasDesdeLunes} days"));
+        $diasHastaDomingo = $dayOfWeek === 0 ? 0 : 7 - $dayOfWeek;
+        $domingo = date('Y-m-d', strtotime("+{$diasHastaDomingo} days"));
 
         $fechas = Fechas::find()
-            ->with(['partidos.clubLocal', 'partidos.clubVisitante'])
-            ->where(['between', 'fecha_programada', $today, $nextSunday])
+            ->joinWith('torneo')
+            ->with(['partidos.clubLocal', 'partidos.clubVisitante', 'partidos.informeArbitral.goles'])
+            ->where(['between', 'fecha_programada', $lunes, $domingo])
+            ->andWhere(['torneo.activo' => 1])
             ->orderBy(['fecha_programada' => SORT_ASC, 'numero_fecha' => SORT_ASC])
             ->all();
 
