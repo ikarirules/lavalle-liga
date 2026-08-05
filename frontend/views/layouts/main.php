@@ -200,14 +200,19 @@ AppAsset::register($this);
 
     // --- Visible también en modo deslogueado ---
     $menuItems[] = ['label' => 'Jugadores', 'url' => ['/jugador/index']];
+    $menuItems[] = ['label' => 'Posiciones', 'url' => ['/tabla-posiciones/index']];
 
     if (!$user->isGuest) {
 
         // --- COMPETENCIA (todos los usuarios autenticados) ---
-        $menuItems[] = ['label' => 'Torneos',   'url' => ['/torneo/index']];
-        $menuItems[] = ['label' => 'Fechas',    'url' => ['/fechas/index']];
-        $menuItems[] = ['label' => 'Partidos',  'url' => ['/partidos/index']];
-        $menuItems[] = ['label' => 'Clubes',    'url' => ['/club/index']];
+        $menuItems[] = [
+            'label' => 'Competencia',
+            'items' => [
+                ['label' => 'Torneos',  'url' => ['/torneo/index']],
+                ['label' => 'Fechas',   'url' => ['/fechas/index']],
+                ['label' => 'Partidos', 'url' => ['/partidos/index']],
+            ],
+        ];
 
         if ($user->can('arbitro') || $user->can('directivo') || $user->can('miembro_liga') || $user->can('admin_liga')) {
             $menuItems[] = ['label' => 'Listas', 'url' => ['/lista-jugadores/index']];
@@ -224,12 +229,16 @@ AppAsset::register($this);
             $menuItems[] = ['label' => 'Multas', 'url' => ['/multa/index']];
         }
 
+        // --- DATOS (info de referencia que casi no cambia) ---
+        $datosItems = [];
+        $datosItems[] = ['label' => 'Clubes', 'url' => ['/club/index']];
         if ($user->can('miembro_liga') || $user->can('admin_liga')) {
-            $menuItems[] = ['label' => 'Categorías', 'url' => ['/categoria/index']];
+            $datosItems[] = ['label' => 'Categorías', 'url' => ['/categoria/index']];
         }
         if ($user->can('admin_liga')) {
-            $menuItems[] = ['label' => 'Infracciones', 'url' => ['/tipo-infraccion/index']];
+            $datosItems[] = ['label' => 'Infracciones', 'url' => ['/tipo-infraccion/index']];
         }
+        $menuItems[] = ['label' => 'Datos', 'items' => $datosItems];
     }
 
     echo Nav::widget([
