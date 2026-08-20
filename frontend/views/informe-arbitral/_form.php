@@ -18,6 +18,21 @@ foreach ($tiposOptions as $id => $nombre) {
     $tiposJs[] = ['id' => $id, 'nombre' => $nombre];
 }
 $ajaxUrl  = Url::to(['informe-arbitral/jugadores-por-partido']);
+
+// Goles e infracciones ya cargados (edición): se prellenan una vez que se conocen los equipos del partido
+$golesJs = [];
+foreach ($model->goles as $gol) {
+    $golesJs[] = ['club_id' => $gol->club_id, 'jugador_id' => $gol->jugador_id, 'cantidad' => $gol->cantidad];
+}
+$detallesJs = [];
+foreach ($model->detalles as $det) {
+    $detallesJs[] = [
+        'club_id'            => $det->club_id,
+        'jugador_id'         => $det->jugador_id,
+        'tipo_infraccion_id' => $det->tipo_infraccion_id,
+        'minuto'             => $det->minuto,
+    ];
+}
 ?>
 
 <div class="informe-arbitral-form">
@@ -98,8 +113,11 @@ $ajaxUrl  = Url::to(['informe-arbitral/jugadores-por-partido']);
 </div>
 
 <?php
-$tiposJson = json_encode($tiposJs, JSON_UNESCAPED_UNICODE);
-$ajaxUrlJs = json_encode($ajaxUrl);
+$tiposJson    = json_encode($tiposJs, JSON_UNESCAPED_UNICODE);
+$ajaxUrlJs    = json_encode($ajaxUrl);
+$partidoInicial = json_encode($model->partido_id);
+$golesJson    = json_encode($golesJs, JSON_UNESCAPED_UNICODE);
+$detallesJson = json_encode($detallesJs, JSON_UNESCAPED_UNICODE);
 
 $js = <<<JS
 var equiposData = {};
@@ -107,6 +125,8 @@ var golIdx = 0;
 var detIdx = 0;
 var ajaxBase = $ajaxUrlJs;
 var tiposInfraccion = $tiposJson;
+var golesExistentes = $golesJson;
+var detallesExistentes = $detallesJson;
 
 function ajaxUrl(id) {
     var sep = ajaxBase.indexOf('?') !== -1 ? '&' : '?';
@@ -134,31 +154,22 @@ function buildJugadorOpts(clubId) {
     return html;
 }
 
-$('#partido-selector').on('change', function() {
-    var id = $(this).val();
-    equiposData = {};
-    $('#goles-body, #infracciones-body').empty();
-    golIdx = 0; detIdx = 0;
-    $('#btn-add-gol, #btn-add-infraccion').prop('disabled', true);
-    if (!id) return;
-    $.getJSON(ajaxUrl(id), function(data) {
-        equiposData = data;
-        $('#btn-add-gol, #btn-add-infraccion').prop('disabled', false);
-    });
-});
-
-$('#btn-add-gol').on('click', function() {
+function addGolRow(prefill) {
     var idx = golIdx++;
     var row = '<tr>' +
         '<td><select name="InformeGol[' + idx + '][club_id]" class="form-control equipo-sel" data-prefix="gol-jug-" data-idx="' + idx + '">' + buildEquipoOpts() + '</select></td>' +
         '<td><select name="InformeGol[' + idx + '][jugador_id]" id="gol-jug-' + idx + '" class="form-control"><option value="">Seleccioná equipo primero</option></select></td>' +
-        '<td><input type="number" name="InformeGol[' + idx + '][cantidad]" class="form-control" value="1" min="1" max="20"></td>' +
+        '<td><input type="number" name="InformeGol[' + idx + '][cantidad]" class="form-control" value="' + (prefill ? prefill.cantidad : 1) + '" min="1" max="20"></td>' +
         '<td><button type="button" class="btn btn-danger btn-xs remove-row">&times;</button></td>' +
     '</tr>';
-    $('#goles-body').append(row);
-});
+    var \$row = $(row).appendTo('#goles-body');
+    if (prefill) {
+        \$row.find('.equipo-sel').val(prefill.club_id);
+        \$row.find('#gol-jug-' + idx).html(buildJugadorOpts(prefill.club_id)).val(prefill.jugador_id);
+    }
+}
 
-$('#btn-add-infraccion').on('click', function() {
+function addInfraccionRow(prefill) {
     var idx = detIdx++;
     var tiposOpts = '<option value="">Tipo...</option>';
     tiposInfraccion.forEach(function(t) {
@@ -168,11 +179,37 @@ $('#btn-add-infraccion').on('click', function() {
         '<td><select name="InformeDetalle[' + idx + '][club_id]" class="form-control equipo-sel" data-prefix="det-jug-" data-idx="' + idx + '">' + buildEquipoOpts() + '</select></td>' +
         '<td><select name="InformeDetalle[' + idx + '][jugador_id]" id="det-jug-' + idx + '" class="form-control"><option value="">Seleccioná equipo primero</option></select></td>' +
         '<td><select name="InformeDetalle[' + idx + '][tipo_infraccion_id]" class="form-control">' + tiposOpts + '</select></td>' +
-        '<td><input type="number" name="InformeDetalle[' + idx + '][minuto]" class="form-control" min="1" max="120" placeholder="min"></td>' +
+        '<td><input type="number" name="InformeDetalle[' + idx + '][minuto]" class="form-control" min="1" max="120" placeholder="min" value="' + (prefill && prefill.minuto ? prefill.minuto : '') + '"></td>' +
         '<td><button type="button" class="btn btn-danger btn-xs remove-row">&times;</button></td>' +
     '</tr>';
-    $('#infracciones-body').append(row);
+    var \$row = $(row).appendTo('#infracciones-body');
+    if (prefill) {
+        \$row.find('.equipo-sel').val(prefill.club_id);
+        \$row.find('#det-jug-' + idx).html(buildJugadorOpts(prefill.club_id)).val(prefill.jugador_id || '');
+        \$row.find('select[name$="[tipo_infraccion_id]"]').val(prefill.tipo_infraccion_id);
+    }
+}
+
+function cargarPartido(id, prefillGoles, prefillDetalles) {
+    equiposData = {};
+    $('#goles-body, #infracciones-body').empty();
+    golIdx = 0; detIdx = 0;
+    $('#btn-add-gol, #btn-add-infraccion').prop('disabled', true);
+    if (!id) return;
+    $.getJSON(ajaxUrl(id), function(data) {
+        equiposData = data;
+        $('#btn-add-gol, #btn-add-infraccion').prop('disabled', false);
+        (prefillGoles || []).forEach(function(g) { addGolRow(g); });
+        (prefillDetalles || []).forEach(function(d) { addInfraccionRow(d); });
+    });
+}
+
+$('#partido-selector').on('change', function() {
+    cargarPartido($(this).val());
 });
+
+$('#btn-add-gol').on('click', function() { addGolRow(null); });
+$('#btn-add-infraccion').on('click', function() { addInfraccionRow(null); });
 
 $(document).on('change', '.equipo-sel', function() {
     var prefix = $(this).data('prefix');
@@ -184,6 +221,11 @@ $(document).on('change', '.equipo-sel', function() {
 $(document).on('click', '.remove-row', function() {
     $(this).closest('tr').remove();
 });
+
+var partidoInicial = $partidoInicial;
+if (partidoInicial) {
+    cargarPartido(partidoInicial, golesExistentes, detallesExistentes);
+}
 JS;
 
 $this->registerJs($js);

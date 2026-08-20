@@ -110,10 +110,10 @@ class InformeArbitralController extends Controller
 
                     // Goles
                     foreach ($post['InformeGol'] ?? [] as $data) {
-                        if (empty($data['jugador_id']) || empty($data['club_id'])) continue;
+                        if (empty($data['club_id'])) continue;
                         $gol = new InformeGol();
                         $gol->informe_id = $model->id;
-                        $gol->jugador_id = (int)$data['jugador_id'];
+                        $gol->jugador_id = !empty($data['jugador_id']) ? (int)$data['jugador_id'] : null;
                         $gol->club_id    = (int)$data['club_id'];
                         $gol->cantidad   = max(1, (int)($data['cantidad'] ?? 1));
                         if (!$gol->save()) throw new \Exception('Error guardando gol');
@@ -229,8 +229,69 @@ class InformeArbitralController extends Controller
             }
         }
 
-        if ($this->request->isPost && $model->load($this->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($this->request->isPost) {
+            $post = $this->request->post();
+            if ($model->load($post)) {
+                if ($isArbitro) {
+                    $model->arbitro_id = \Yii::$app->user->id;
+                }
+
+                $transaction = \Yii::$app->db->beginTransaction();
+                try {
+                    if (!$model->save()) {
+                        throw new \Exception('Error en cabecera del informe');
+                    }
+
+                    // Reemplazar goles e infracciones existentes por lo que llegó del formulario
+                    $detalleIds = InformeDetalle::find()->select('id')->where(['informe_id' => $model->id])->column();
+                    if ($detalleIds) {
+                        Multa::deleteAll(['informe_detalle_id' => $detalleIds]);
+                    }
+                    InformeDetalle::deleteAll(['informe_id' => $model->id]);
+                    InformeGol::deleteAll(['informe_id' => $model->id]);
+
+                    // Goles
+                    foreach ($post['InformeGol'] ?? [] as $data) {
+                        if (empty($data['club_id'])) continue;
+                        $gol = new InformeGol();
+                        $gol->informe_id = $model->id;
+                        $gol->jugador_id = !empty($data['jugador_id']) ? (int)$data['jugador_id'] : null;
+                        $gol->club_id    = (int)$data['club_id'];
+                        $gol->cantidad   = max(1, (int)($data['cantidad'] ?? 1));
+                        if (!$gol->save()) throw new \Exception('Error guardando gol');
+                    }
+
+                    // Infracciones
+                    foreach ($post['InformeDetalle'] ?? [] as $data) {
+                        if (empty($data['tipo_infraccion_id']) || empty($data['club_id'])) continue;
+                        $detalle = new InformeDetalle();
+                        $detalle->informe_id         = $model->id;
+                        $detalle->club_id            = (int)$data['club_id'];
+                        $detalle->jugador_id         = !empty($data['jugador_id']) ? (int)$data['jugador_id'] : null;
+                        $detalle->tipo_infraccion_id = (int)$data['tipo_infraccion_id'];
+                        $detalle->minuto             = !empty($data['minuto']) ? (int)$data['minuto'] : null;
+                        if (!$detalle->save()) throw new \Exception('Error guardando infracción');
+
+                        if ($detalle->jugador_id) {
+                            $tipo = TipoInfraccion::findOne($detalle->tipo_infraccion_id);
+                            if ($tipo && $tipo->genera_multa && $tipo->monto_multa > 0) {
+                                $multa                      = new Multa();
+                                $multa->jugador_id          = $detalle->jugador_id;
+                                $multa->informe_detalle_id  = $detalle->id;
+                                $multa->monto               = $tipo->monto_multa;
+                                if (!$multa->save()) throw new \Exception('Error guardando multa');
+                            }
+                        }
+                    }
+
+                    $transaction->commit();
+                    return $this->redirect(['view', 'id' => $model->id]);
+
+                } catch (\Exception $e) {
+                    $transaction->rollBack();
+                    \Yii::$app->session->addFlash('error', $e->getMessage());
+                }
+            }
         }
 
         $partidosOptions = $this->buildPartidosOptions($model->partido_id);

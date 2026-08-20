@@ -12,7 +12,8 @@ class InformeGol extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['informe_id', 'jugador_id', 'club_id'], 'required'],
+            [['jugador_id'], 'default', 'value' => null],
+            [['informe_id', 'club_id'], 'required'],
             [['informe_id', 'jugador_id', 'club_id', 'cantidad'], 'integer'],
             [['cantidad'], 'default', 'value' => 1],
             [['cantidad'], 'integer', 'min' => 1, 'max' => 20],

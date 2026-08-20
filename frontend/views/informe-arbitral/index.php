@@ -26,11 +26,37 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
+        'pager' => [
+            'class' => \yii\bootstrap5\LinkPager::class,
+            'firstPageLabel' => false,
+            'lastPageLabel'  => false,
+            'prevPageLabel'  => '‹',
+            'nextPageLabel'  => '›',
+            'maxButtonCount' => 7,
+        ],
         'columns' => [
            // ['class' => 'yii\grid\SerialColumn'],
 
             //'id',
-            'partido_id',
+            [
+                'label' => 'Partido',
+                'value' => function (InformeArbitral $model) {
+                    $partido = $model->partido;
+                    if (!$partido) {
+                        return '—';
+                    }
+                    $local     = $partido->clubLocal     ? $partido->clubLocal->nombre     : '?';
+                    $visitante = $partido->clubVisitante ? $partido->clubVisitante->nombre : '?';
+                    return $local . ' vs ' . $visitante . ' (' . $partido->categoria . ')';
+                },
+            ],
+            [
+                'label' => 'Fecha',
+                'value' => function (InformeArbitral $model) {
+                    $fecha = $model->partido ? $model->partido->fecha : null;
+                    return $fecha ? ('Fecha #' . $fecha->numero_fecha . ' — ' . $fecha->fecha_programada) : '—';
+                },
+            ],
             'arbitro_id',
             'asistente_id',
             'observaciones:ntext',
