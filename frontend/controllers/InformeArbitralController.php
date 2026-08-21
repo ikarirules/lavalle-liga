@@ -144,6 +144,14 @@ class InformeArbitralController extends Controller
                         }
                     }
 
+                    // Cargar el informe implica que el partido ya se jugó: lo reflejamos
+                    // en Partidos.estado para que la tabla de posiciones lo tenga en cuenta.
+                    $partido = Partidos::findOne($model->partido_id);
+                    if ($partido && !$partido->isEstadoJugada()) {
+                        $partido->setEstadoToJugada();
+                        if (!$partido->save()) throw new \Exception('Error actualizando estado del partido');
+                    }
+
                     $transaction->commit();
                     return $this->redirect(['view', 'id' => $model->id]);
 
@@ -282,6 +290,14 @@ class InformeArbitralController extends Controller
                                 if (!$multa->save()) throw new \Exception('Error guardando multa');
                             }
                         }
+                    }
+
+                    // Cargar el informe implica que el partido ya se jugó: lo reflejamos
+                    // en Partidos.estado para que la tabla de posiciones lo tenga en cuenta.
+                    $partido = Partidos::findOne($model->partido_id);
+                    if ($partido && !$partido->isEstadoJugada()) {
+                        $partido->setEstadoToJugada();
+                        if (!$partido->save()) throw new \Exception('Error actualizando estado del partido');
                     }
 
                     $transaction->commit();
