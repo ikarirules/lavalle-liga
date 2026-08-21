@@ -33,7 +33,10 @@ class TablaPosicionesController extends Controller
     {
         $torneo = Torneo::find()->where(['activo' => 1])->one();
 
-        $categorias = Categoria::find()->where(['activo' => 1])->all();
+        $categorias = Categoria::find()
+            ->where(['activo' => 1])
+            ->andWhere(['!=', 'nombre', 'Directivo'])
+            ->all();
         usort($categorias, [$this, 'compararCategorias']);
 
         $tablas = [];
