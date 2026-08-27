@@ -92,6 +92,17 @@ $this->params['breadcrumbs'][] = $this->title;
                 </div>
             </div>
         <?php endforeach; ?>
+
+        <div class="small text-muted mt-2">
+            <strong>PJ</strong> Partidos Jugados &nbsp;·&nbsp;
+            <strong>PG</strong> Partidos Ganados &nbsp;·&nbsp;
+            <strong>PE</strong> Partidos Empatados &nbsp;·&nbsp;
+            <strong>PP</strong> Partidos Perdidos &nbsp;·&nbsp;
+            <strong>GF</strong> Goles a Favor &nbsp;·&nbsp;
+            <strong>GC</strong> Goles en Contra &nbsp;·&nbsp;
+            <strong>DG</strong> Diferencia de Goles &nbsp;·&nbsp;
+            <strong>Pts</strong> Puntos
+        </div>
     <?php endif; ?>
 
 </div>
