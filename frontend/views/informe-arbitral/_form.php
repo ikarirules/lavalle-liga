@@ -105,7 +105,7 @@ foreach ($model->detalles as $det) {
     </button>
 
     <div class="form-group" style="margin-top:24px">
-        <?= Html::submitButton('Guardar Informe', ['class' => 'btn btn-success']) ?>
+        <?= Html::submitButton('Guardar Informe', ['class' => 'btn btn-success', 'id' => 'btn-guardar-informe']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>
@@ -226,6 +226,15 @@ var partidoInicial = $partidoInicial;
 if (partidoInicial) {
     cargarPartido(partidoInicial, golesExistentes, detallesExistentes);
 }
+
+$('.informe-arbitral-form form').on('beforeSubmit', function() {
+    var \$btn = $('#btn-guardar-informe');
+    if (\$btn.prop('disabled')) {
+        return false;
+    }
+    \$btn.prop('disabled', true).text('Guardando...');
+    return true;
+});
 JS;
 
 $this->registerJs($js);
