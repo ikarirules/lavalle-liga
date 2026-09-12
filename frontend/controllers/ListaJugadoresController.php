@@ -9,7 +9,6 @@ use common\models\ListaJugadores;
 use common\models\Partidos;
 use frontend\models\ListaJugadoresSearch;
 use Yii;
-use yii\helpers\Json;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -33,7 +32,7 @@ class ListaJugadoresController extends Controller
                             'roles'   => ['arbitro', 'directivo', 'miembro_liga', 'admin_liga'],
                         ],
                         [
-                            'actions' => ['create', 'update', 'update-remera', 'poblar-lista'],
+                            'actions' => ['create', 'update', 'update-remera', 'poblar-lista', 'jugadores-partido'],
                             'allow'   => true,
                             'roles'   => ['directivo', 'miembro_liga', 'admin_liga'],
                         ],
@@ -173,12 +172,9 @@ class ListaJugadoresController extends Controller
             $model->partido_id = Yii::$app->request->get('partido_id');
         }
 
-        [$partidos, $jugadoresPorPartido] = $this->getCreateData();
-
         return $this->render('create', [
-            'model'                => $model,
-            'partidos'             => $partidos,
-            'jugadoresPorPartido'  => $jugadoresPorPartido,
+            'model'    => $model,
+            'partidos' => $this->getPartidosList(),
         ]);
     }
 
@@ -190,13 +186,31 @@ class ListaJugadoresController extends Controller
             return $this->redirect(['lista-partido', 'partido_id' => $model->partido_id]);
         }
 
-        [$partidos, $jugadoresPorPartido] = $this->getCreateData();
-
         return $this->render('update', [
-            'model'               => $model,
-            'partidos'            => $partidos,
-            'jugadoresPorPartido' => $jugadoresPorPartido,
+            'model'    => $model,
+            'partidos' => $this->getPartidosList(),
         ]);
+    }
+
+    /**
+     * AJAX: jugadores elegibles de un partido/lado (local o visitante).
+     * GET /lista-jugadores/jugadores-partido?partido_id=X&lado=local|visitante
+     */
+    public function actionJugadoresPartido($partido_id, $lado)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $partido = Partidos::find()->where(['id' => $partido_id])->one();
+        if (!$partido) {
+            throw new NotFoundHttpException('Partido no encontrado.');
+        }
+
+        $clubId = $lado === 'visitante' ? $partido->club_visitante_id : $partido->club_local_id;
+
+        return [
+            'club_id'   => $clubId,
+            'jugadores' => $this->buildJugadoresList($clubId),
+        ];
     }
 
     public function actionDelete($id)
@@ -424,12 +438,8 @@ class ListaJugadoresController extends Controller
         return $this->redirect(['lista-partido', 'partido_id' => $partido_id]);
     }
 
-    /**
-     * Datos para el formulario de alta.
-     * Devuelve [$partidos, $jugadoresPorPartido].
-     * $jugadoresPorPartido = { partido_id: { local: [{id,text}], visitante: [...], local_club_id, visitante_club_id } }
-     */
-    private function getCreateData(): array
+    /** Lista de partidos para el dropdown del formulario: [id => label]. */
+    private function getPartidosList(): array
     {
         $todoPartidos = Partidos::find()
             ->with(['clubLocal', 'clubVisitante'])
@@ -437,38 +447,36 @@ class ListaJugadoresController extends Controller
             ->all();
 
         $partidos = [];
-        $jugadoresPorPartido = [];
-
         foreach ($todoPartidos as $p) {
             $localNombre     = $p->clubLocal     ? $p->clubLocal->nombre     : '?';
             $visitanteNombre = $p->clubVisitante ? $p->clubVisitante->nombre : '?';
             $partidos[$p->id] = "Partido #{$p->id} — {$localNombre} vs {$visitanteNombre}";
-
-            $buildList = function ($clubId) {
-                $jugadores = Jugador::find()
-                    ->with('categoria')
-                    ->where([
-                        'or',
-                        ['and', ['club_id' => $clubId], ['club_pase_id' => null]],
-                        ['club_pase_id' => $clubId],
-                    ])
-                    ->orderBy('nombre')
-                    ->all();
-                return array_map(function ($j) {
-                    $cat  = $j->categoria ? ' [' . $j->categoria->nombre . ']' : '';
-                    return ['id' => $j->id, 'text' => $j->nombre . ' — DNI ' . $j->dni . $cat];
-                }, $jugadores);
-            };
-
-            $jugadoresPorPartido[$p->id] = [
-                'local_club_id'     => $p->club_local_id,
-                'visitante_club_id' => $p->club_visitante_id,
-                'local'             => $buildList($p->club_local_id),
-                'visitante'         => $buildList($p->club_visitante_id),
-            ];
         }
 
-        return [$partidos, Json::encode($jugadoresPorPartido)];
+        return $partidos;
+    }
+
+    /** Jugadores elegibles de un club (propios sin pase a otro club, o con pase hacia este). */
+    private function buildJugadoresList(?int $clubId): array
+    {
+        if (!$clubId) {
+            return [];
+        }
+
+        $jugadores = Jugador::find()
+            ->with('categoria')
+            ->where([
+                'or',
+                ['and', ['club_id' => $clubId], ['club_pase_id' => null]],
+                ['club_pase_id' => $clubId],
+            ])
+            ->orderBy('nombre')
+            ->all();
+
+        return array_map(function ($j) {
+            $cat = $j->categoria ? ' [' . $j->categoria->nombre . ']' : '';
+            return ['id' => $j->id, 'text' => $j->nombre . ' — DNI ' . $j->dni . $cat];
+        }, $jugadores);
     }
 
     protected function findModel($id)

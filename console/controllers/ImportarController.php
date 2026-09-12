@@ -3,8 +3,10 @@
 namespace console\controllers;
 
 use common\models\Jugador;
+use common\models\User;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
+use Yii;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
@@ -97,6 +99,116 @@ class ImportarController extends Controller
         $this->stdout("\nResumen: $insertados insertados, $omitidos omitidos, $errores errores.\n");
 
         return $errores > 0 ? ExitCode::UNSPECIFIED_ERROR : ExitCode::OK;
+    }
+
+    /**
+     * Importa usuarios árbitro desde un Excel, ya con la cuenta activada.
+     *
+     * Convención de la liga (sin drama, ya usada antes):
+     *   - username = nombre-apellido (minúsculas, sin tildes, espacios → guion)
+     *   - password = DNI
+     *   - email = placeholder "{username}@arbitro.local" (la columna es
+     *     NOT NULL UNIQUE en la BD aunque el modelo User no la valide)
+     *   - status = ACTIVE (no INACTIVE como en el signup normal)
+     *   - se asigna el rol RBAC 'arbitro' automáticamente
+     *   - no se guarda columna de nombre/apellido separada: el modelo User
+     *     no tiene esa columna y no se agrega una nueva, el nombre queda
+     *     representado en el propio username.
+     *
+     * Formato esperado del Excel (columnas en orden):
+     *   Col 1: Nombre y Apellido
+     *   Col 2: DNI
+     *
+     * Uso:
+     *   php yii importar/arbitros <archivo.xlsx>
+     */
+    public function actionArbitros(string $archivo): int
+    {
+        $path = \Yii::getAlias($archivo);
+
+        if (!file_exists($path)) {
+            $this->stderr("Error: no se encontró el archivo '$path'\n");
+            return ExitCode::UNSPECIFIED_ERROR;
+        }
+
+        $auth = Yii::$app->authManager;
+        $rolArbitro = $auth->getRole('arbitro');
+        if (!$rolArbitro) {
+            $this->stderr("Error: el rol 'arbitro' no existe. Corré 'php yii rbac/init' primero.\n");
+            return ExitCode::UNSPECIFIED_ERROR;
+        }
+
+        $spreadsheet = IOFactory::load($path);
+        $ws          = $spreadsheet->getActiveSheet();
+        $rows        = $ws->toArray(null, true, false, false);
+
+        // Saltar encabezado (fila 0)
+        array_shift($rows);
+
+        $insertados = 0;
+        $omitidos   = 0;
+        $errores    = 0;
+
+        foreach ($rows as $i => $row) {
+            $fila = $i + 2; // número de fila real en el Excel
+
+            $nombre = trim((string)($row[0] ?? ''));
+            $dni    = trim((string)($row[1] ?? ''));
+
+            if ($nombre === '' || $dni === '') {
+                continue; // fila vacía al final del archivo
+            }
+
+            $username = $this->slugUsername($nombre);
+
+            // Verificar duplicado por username
+            if (User::find()->where(['username' => $username])->exists()) {
+                $this->stdout("  [OMITIDO] Fila $fila: '$nombre' (usuario '$username' ya existe)\n");
+                $omitidos++;
+                continue;
+            }
+
+            $user           = new User();
+            $user->username = $username;
+            $user->email    = $username . '@arbitro.local'; // la columna es NOT NULL UNIQUE, no hay email real
+            $user->tipo     = 'arbitro';
+            $user->status   = User::STATUS_ACTIVE;
+            $user->setPassword($dni);
+            $user->generateAuthKey();
+
+            if ($user->save()) {
+                $auth->assign($rolArbitro, $user->id);
+                $this->stdout("  [OK]      Fila $fila: '$nombre' → usuario '$username' / pass $dni (activado, rol arbitro)\n");
+                $insertados++;
+            } else {
+                $errMsg = implode(', ', $user->getFirstErrors());
+                $this->stderr("  [ERROR]   Fila $fila: '$nombre' — $errMsg\n");
+                $errores++;
+            }
+        }
+
+        $this->stdout("\nResumen: $insertados insertados, $omitidos omitidos, $errores errores.\n");
+
+        return $errores > 0 ? ExitCode::UNSPECIFIED_ERROR : ExitCode::OK;
+    }
+
+    /**
+     * Convierte "Nombre y Apellido" en un username tipo "nombre-apellido":
+     * minúsculas, sin tildes, espacios (y repetidos) colapsados a un guion.
+     */
+    private function slugUsername(string $nombreCompleto): string
+    {
+        $sinTildes = strtr($nombreCompleto, [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ñ' => 'n',
+            'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ñ' => 'n',
+            'ü' => 'u', 'Ü' => 'u',
+        ]);
+
+        $slug = mb_strtolower(trim($sinTildes));
+        $slug = preg_replace('/\s+/', '-', $slug);
+        $slug = preg_replace('/[^a-z0-9\-]/', '', $slug);
+
+        return $slug;
     }
 
     /**

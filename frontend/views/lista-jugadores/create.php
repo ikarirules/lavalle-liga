@@ -2,13 +2,11 @@
 
 use common\models\ListaJugadores;
 use yii\helpers\Html;
-use yii\helpers\Json;
 use yii\widgets\ActiveForm;
 
 /** @var yii\web\View $this */
 /** @var common\models\ListaJugadores $model */
 /** @var array  $partidos               [id => label] */
-/** @var string $jugadoresPorPartido    JSON {partido_id: {local:[{id,text}], visitante:[...], local_club_id, visitante_club_id}} */
 
 $this->title = 'Agregar Jugador a Lista';
 $this->params['breadcrumbs'][] = ['label' => 'Listas', 'url' => ['index']];
@@ -74,9 +72,9 @@ $ladoGet = Yii::$app->request->get('lado', '');
 </div>
 
 <?php
-$jpJson = $jugadoresPorPartido; // ya es JSON string
+$urlJugadoresPartido = \yii\helpers\Url::to(['jugadores-partido']);
 $js = <<<JS
-var jpData = $jpJson;
+var urlJugadoresPartido = '$urlJugadoresPartido';
 
 function actualizarJugadores() {
     var pid  = $('#lj-partido').val();
@@ -89,21 +87,17 @@ function actualizarJugadores() {
     clubNombre.val('');
     clubId.val('');
 
-    if (!pid || !lado || !jpData[pid]) return;
+    if (!pid || !lado) return;
 
-    var data = jpData[pid];
-    var lista = (lado === 'local') ? data.local : data.visitante;
-    var cid   = (lado === 'local') ? data.local_club_id : data.visitante_club_id;
+    $.getJSON(urlJugadoresPartido, {partido_id: pid, lado: lado}, function (data) {
+        clubId.val(data.club_id);
+        clubNombre.val('Club ID: ' + data.club_id + ' (' + data.jugadores.length + ' jugadores disponibles)');
 
-    clubId.val(cid);
-    // Buscar nombre del club en los jugadores (o simplemente indicar el id)
-    // Mostramos cantidad de jugadores disponibles
-    clubNombre.val('Club ID: ' + cid + ' (' + lista.length + ' jugadores disponibles)');
-
-    $.each(lista, function(i, j) {
-        sel.append('<option value="' + j.id + '">' + j.text + '</option>');
+        $.each(data.jugadores, function (i, j) {
+            sel.append('<option value="' + j.id + '">' + j.text + '</option>');
+        });
+        sel.val('');
     });
-    sel.val('');
 }
 
 $('#lj-partido, #lj-lado').on('change', actualizarJugadores);

@@ -1,0 +1,58 @@
+CÓMO CARGAR VARIOS ÁRBITROS DE UNA (usuarios con cuenta activada)
+==================================================================
+No es la primera vez que se pide esto — dejar este archivo como
+antecedente para la próxima vez.
+
+CONVENCIÓN DE LA LIGA para cuentas de árbitro creadas en lote
+(ya charlada y aceptada, así se hizo la vez anterior):
+  - username = nombre-apellido, en minúsculas, sin tildes, espacios
+               reemplazados por guion medio.
+               Ej: "Juan Pérez" → "juan-perez"
+  - password = DNI
+  - email    = placeholder "{username}@arbitro.local"
+               (¡OJO! la columna `email` en la tabla `user` es
+               NOT NULL UNIQUE a nivel de BD — ver
+               console/migrations/m130524_201442_init.php:21 —
+               aunque el modelo User no la valide en rules().
+               Sin este placeholder el INSERT tira error 1364.)
+  - status   = ACTIVE (no INACTIVE como en el signup normal, para que
+               puedan loguearse directo sin verificación)
+  - se asigna el rol RBAC 'arbitro' automáticamente
+  - NO se agrega ninguna columna nueva a la tabla user (nombre/apellido).
+    El modelo User no tiene esa columna y no hace falta: el nombre queda
+    representado en el propio username.
+
+CÓMO SE HIZO (sesión 2026-09-12)
+---------------------------------
+Se agregó el método actionArbitros() a
+console\controllers\ImportarController.php (mismo patrón que
+actionJugadores(), que ya importaba jugadores desde Excel con
+PhpSpreadsheet).
+
+Formato del Excel esperado (fila 1 = encabezado, se ignora):
+  Col A: Nombre y Apellido   (se usa para armar el username)
+  Col B: DNI                 (se usa como password)
+
+Uso:
+  php yii importar/arbitros C:/ruta/al/archivo.xlsx
+
+Qué hace:
+  - Arma el username con slugUsername(): minúsculas, sin tildes,
+    espacios → guion medio, saca cualquier caracter que no sea
+    a-z/0-9/guion.
+  - Si ese username ya existe → omite la fila (evita duplicados).
+  - Si no existe: crea User con username=nombre-apellido,
+    password=DNI, status=ACTIVE, tipo='arbitro', genera auth_key,
+    guarda, y le asigna el rol 'arbitro' vía
+    Yii::$app->authManager->assign().
+  - Imprime resumen: insertados / omitidos / errores.
+
+Requisito previo: el rol 'arbitro' tiene que existir en RBAC
+(correr "php yii rbac/init" si es una base nueva). El comando
+verifica esto y avisa si falta.
+
+Para ver quién quedó cargado y con qué rol:
+  php yii rbac/list
+
+Ver también 00001/bitacora.txt (sección RBAC) y
+00001/tareas.txt para el contexto histórico de roles de árbitro.
