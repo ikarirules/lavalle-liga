@@ -38,7 +38,7 @@ class JugadorSearch extends Jugador
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
-            'sort'  => ['defaultOrder' => ['nombre' => SORT_ASC]],
+            'sort'  => ['defaultOrder' => ['id' => SORT_DESC]],
         ]);
 
         $this->load($params, 'JugadorSearch');

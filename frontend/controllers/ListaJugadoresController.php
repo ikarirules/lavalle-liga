@@ -27,12 +27,12 @@ class ListaJugadoresController extends Controller
                     'class' => AccessControl::class,
                     'rules' => [
                         [
-                            'actions' => ['index', 'view', 'lista-partido', 'exportar-excel'],
+                            'actions' => ['index', 'view', 'lista-partido', 'exportar-excel', 'plantel'],
                             'allow'   => true,
                             'roles'   => ['arbitro', 'directivo', 'miembro_liga', 'admin_liga'],
                         ],
                         [
-                            'actions' => ['create', 'update', 'update-remera', 'poblar-lista', 'jugadores-partido'],
+                            'actions' => ['create', 'update', 'update-remera', 'poblar-lista', 'jugadores-partido', 'plantel-agregar'],
                             'allow'   => true,
                             'roles'   => ['directivo', 'miembro_liga', 'admin_liga'],
                         ],
@@ -46,9 +46,10 @@ class ListaJugadoresController extends Controller
                 'verbs' => [
                     'class'   => VerbFilter::class,
                     'actions' => [
-                        'delete'        => ['POST'],
-                        'update-remera' => ['POST'],
-                        'poblar-lista'  => ['POST'],
+                        'delete'          => ['POST'],
+                        'update-remera'   => ['POST'],
+                        'poblar-lista'    => ['POST'],
+                        'plantel-agregar' => ['POST'],
                     ],
                 ],
             ]
@@ -215,14 +216,88 @@ class ListaJugadoresController extends Controller
 
     public function actionDelete($id)
     {
-        $entry = $this->findModel($id);
+        $entry     = $this->findModel($id);
         $partidoId = $entry->partido_id;
+        $clubId    = $entry->club_id;
+        $esBuenaFe = $entry->tipo_lista === ListaJugadores::TIPO_BUENA_FE;
         $entry->delete();
 
+        if ($esBuenaFe) {
+            return $this->redirect(['plantel', 'club_id' => $clubId]);
+        }
         if ($partidoId) {
             return $this->redirect(['lista-partido', 'partido_id' => $partidoId]);
         }
         return $this->redirect(['index']);
+    }
+
+    /**
+     * Plantel maestro ("Buena Fe") de un club: jugadores que se cargan una sola vez
+     * por temporada y se heredan automáticamente en cada partido (ver actionPoblarLista).
+     * GET /lista-jugadores/plantel?club_id=X
+     */
+    public function actionPlantel($club_id)
+    {
+        $club = Club::findOne($club_id);
+        if (!$club) {
+            throw new NotFoundHttpException('Club no encontrado.');
+        }
+
+        $plantel = ListaJugadores::find()
+            ->joinWith(['jugador' => function ($q) { $q->with('categoria'); }])
+            ->where(['lista_jugadores.tipo_lista' => ListaJugadores::TIPO_BUENA_FE, 'lista_jugadores.club_id' => $club_id])
+            ->orderBy(['jugador.nombre' => SORT_ASC])
+            ->all();
+
+        $idsEnPlantel = array_map(fn($e) => $e->jugador_id, $plantel);
+
+        $disponibles = Jugador::find()
+            ->with('categoria')
+            ->where([
+                'or',
+                ['and', ['club_id' => $club_id], ['club_pase_id' => null]],
+                ['club_pase_id' => $club_id],
+            ])
+            ->andWhere(['not in', 'id', $idsEnPlantel ?: [0]])
+            ->orderBy('nombre')
+            ->all();
+
+        return $this->render('plantel', [
+            'club'        => $club,
+            'plantel'     => $plantel,
+            'disponibles' => $disponibles,
+            'optsRemera'  => ListaJugadores::optsRemera(),
+        ]);
+    }
+
+    /**
+     * Agrega un jugador al plantel maestro (Buena Fe) de un club.
+     * POST /lista-jugadores/plantel-agregar  {club_id, jugador_id}
+     */
+    public function actionPlantelAgregar()
+    {
+        $clubId    = (int) Yii::$app->request->post('club_id');
+        $jugadorId = (int) Yii::$app->request->post('jugador_id');
+
+        if ($clubId && $jugadorId) {
+            $existe = ListaJugadores::find()->where([
+                'tipo_lista' => ListaJugadores::TIPO_BUENA_FE,
+                'club_id'    => $clubId,
+                'jugador_id' => $jugadorId,
+            ])->exists();
+
+            if (!$existe) {
+                $entry              = new ListaJugadores();
+                $entry->tipo_lista  = ListaJugadores::TIPO_BUENA_FE;
+                $entry->club_id     = $clubId;
+                $entry->jugador_id  = $jugadorId;
+                $entry->save(false);
+            } else {
+                Yii::$app->session->setFlash('warning', 'Ese jugador ya está en el plantel.');
+            }
+        }
+
+        return $this->redirect(['plantel', 'club_id' => $clubId]);
     }
 
     // -------------------------------------------------------------------------
@@ -383,6 +458,13 @@ class ListaJugadoresController extends Controller
     /**
      * Puebla automáticamente la lista con todos los jugadores de ambos clubes
      * según la categoría del partido. Omite los que ya estén cargados.
+     *
+     * Si la categoría tiene permite_bf=1, primero intenta clonar del plantel
+     * maestro (Buena Fe) del club — jugador y remera incluidos — re-validando
+     * la elegibilidad vigente (por si hubo un pase desde que se cargó al plantel).
+     * Si el club no tiene plantel cargado para esa categoría, o la categoría no
+     * usa Buena Fe, cae al comportamiento anterior: consulta directa a Jugador.
+     *
      * POST /lista-jugadores/poblar-lista
      */
     public function actionPoblarLista()
@@ -397,23 +479,63 @@ class ListaJugadoresController extends Controller
             throw new NotFoundHttpException('Partido no encontrado.');
         }
 
-        $categoria = Categoria::find()->where(['nombre' => $partido->categoria])->one();
-        $catId     = $categoria ? $categoria->id : null;
+        $categoria   = Categoria::find()->where(['nombre' => $partido->categoria])->one();
+        $catId       = $categoria ? $categoria->id : null;
+        $usarPlantel = $categoria && $categoria->permite_bf;
 
         $insertados = 0;
+        $omitidos   = 0;
 
         foreach ([$partido->club_local_id, $partido->club_visitante_id] as $clubId) {
-            $q = Jugador::find()->where([
-                'or',
-                ['and', ['club_id' => $clubId], ['club_pase_id' => null]],
-                ['club_pase_id' => $clubId],
-            ]);
-            if ($catId) {
-                $q->andWhere(['categoria_id' => $catId]);
-            }
-            $jugadores = $q->orderBy('nombre')->all();
+            $candidatos = [];
 
-            foreach ($jugadores as $jugador) {
+            if ($usarPlantel) {
+                $plantel = ListaJugadores::find()
+                    ->with('jugador')
+                    ->where(['tipo_lista' => ListaJugadores::TIPO_BUENA_FE, 'club_id' => $clubId])
+                    ->all();
+
+                foreach ($plantel as $entryPlantel) {
+                    $jugador = $entryPlantel->jugador;
+                    if (!$jugador) {
+                        continue;
+                    }
+                    // Elegibilidad vigente: puede haber cambiado desde que se cargó al plantel
+                    $elegible = ($jugador->club_id == $clubId && $jugador->club_pase_id === null)
+                        || $jugador->club_pase_id == $clubId;
+                    if (!$elegible) {
+                        continue;
+                    }
+                    if ($catId && $jugador->categoria_id != $catId) {
+                        continue;
+                    }
+                    $candidatos[] = ['jugador' => $jugador, 'remera' => $entryPlantel->remera];
+                }
+            }
+
+            // Fallback: la categoría no usa plantel, o el plantel del club está vacío para ella
+            if (empty($candidatos)) {
+                $q = Jugador::find()->where([
+                    'or',
+                    ['and', ['club_id' => $clubId], ['club_pase_id' => null]],
+                    ['club_pase_id' => $clubId],
+                ]);
+                if ($catId) {
+                    $q->andWhere(['categoria_id' => $catId]);
+                }
+                foreach ($q->orderBy('nombre')->all() as $jugador) {
+                    $candidatos[] = ['jugador' => $jugador, 'remera' => null];
+                }
+            }
+
+            foreach ($candidatos as $c) {
+                $jugador = $c['jugador'];
+
+                if ($jugador->suspendido) {
+                    $omitidos++;
+                    continue;
+                }
+
                 $existe = ListaJugadores::find()->where([
                     'partido_id' => $partido_id,
                     'club_id'    => $clubId,
@@ -426,14 +548,18 @@ class ListaJugadoresController extends Controller
                     $entry->partido_id  = $partido_id;
                     $entry->club_id     = $clubId;
                     $entry->jugador_id  = $jugador->id;
+                    $entry->remera      = $c['remera'];
                     $entry->save(false);
                     $insertados++;
                 }
             }
         }
 
-        Yii::$app->session->setFlash('success',
-            "Se cargaron {$insertados} jugadores automáticamente.");
+        $mensaje = "Se cargaron {$insertados} jugadores automáticamente.";
+        if ($omitidos > 0) {
+            $mensaje .= " Se omitieron {$omitidos} por estar suspendidos.";
+        }
+        Yii::$app->session->setFlash('success', $mensaje);
 
         return $this->redirect(['lista-partido', 'partido_id' => $partido_id]);
     }
@@ -472,6 +598,9 @@ class ListaJugadoresController extends Controller
             ])
             ->orderBy('nombre')
             ->all();
+
+        // Un sancionado/suspendido no debería poder anotarse en la lista de un partido
+        $jugadores = array_values(array_filter($jugadores, fn($j) => !$j->suspendido));
 
         return array_map(function ($j) {
             $cat = $j->categoria ? ' [' . $j->categoria->nombre . ']' : '';
