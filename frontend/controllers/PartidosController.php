@@ -5,6 +5,7 @@ namespace frontend\controllers;
 use common\models\Categoria;
 use common\models\Fechas;
 use common\models\Jugador;
+use common\models\ListaJugadores;
 use common\models\Partidos;
 use common\models\User;
 use frontend\models\PartidosSearch;
@@ -95,6 +96,14 @@ class PartidosController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
+                // Arranca con la última lista de cada club en esta categoría (o el plantel)
+                [$insertados, $omitidos] = ListaJugadores::poblarPartido($model);
+                $mensaje = "Lista de jugadores cargada automáticamente: {$insertados} jugadores.";
+                if ($omitidos > 0) {
+                    $mensaje .= " Se omitieron {$omitidos} por estar suspendidos.";
+                }
+                Yii::$app->session->setFlash('success', $mensaje);
+
                 return $this->redirect(['view', 'id' => $model->id]);
             }
         } else {

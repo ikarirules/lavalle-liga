@@ -456,14 +456,9 @@ class ListaJugadoresController extends Controller
     }
 
     /**
-     * Puebla automáticamente la lista con todos los jugadores de ambos clubes
-     * según la categoría del partido. Omite los que ya estén cargados.
-     *
-     * Si la categoría tiene permite_bf=1, primero intenta clonar del plantel
-     * maestro (Buena Fe) del club — jugador y remera incluidos — re-validando
-     * la elegibilidad vigente (por si hubo un pase desde que se cargó al plantel).
-     * Si el club no tiene plantel cargado para esa categoría, o la categoría no
-     * usa Buena Fe, cae al comportamiento anterior: consulta directa a Jugador.
+     * Puebla la lista de ambos clubes del partido (ver ListaJugadores::poblarPartido).
+     * Se ejecuta automáticamente al crear el partido; este botón permite recargarla.
+     * Omite los que ya estén cargados.
      *
      * POST /lista-jugadores/poblar-lista
      */
@@ -479,81 +474,7 @@ class ListaJugadoresController extends Controller
             throw new NotFoundHttpException('Partido no encontrado.');
         }
 
-        $categoria   = Categoria::find()->where(['nombre' => $partido->categoria])->one();
-        $catId       = $categoria ? $categoria->id : null;
-        $usarPlantel = $categoria && $categoria->permite_bf;
-
-        $insertados = 0;
-        $omitidos   = 0;
-
-        foreach ([$partido->club_local_id, $partido->club_visitante_id] as $clubId) {
-            $candidatos = [];
-
-            if ($usarPlantel) {
-                $plantel = ListaJugadores::find()
-                    ->with('jugador')
-                    ->where(['tipo_lista' => ListaJugadores::TIPO_BUENA_FE, 'club_id' => $clubId])
-                    ->all();
-
-                foreach ($plantel as $entryPlantel) {
-                    $jugador = $entryPlantel->jugador;
-                    if (!$jugador) {
-                        continue;
-                    }
-                    // Elegibilidad vigente: puede haber cambiado desde que se cargó al plantel
-                    $elegible = ($jugador->club_id == $clubId && $jugador->club_pase_id === null)
-                        || $jugador->club_pase_id == $clubId;
-                    if (!$elegible) {
-                        continue;
-                    }
-                    if ($catId && $jugador->categoria_id != $catId) {
-                        continue;
-                    }
-                    $candidatos[] = ['jugador' => $jugador, 'remera' => $entryPlantel->remera];
-                }
-            }
-
-            // Fallback: la categoría no usa plantel, o el plantel del club está vacío para ella
-            if (empty($candidatos)) {
-                $q = Jugador::find()->where([
-                    'or',
-                    ['and', ['club_id' => $clubId], ['club_pase_id' => null]],
-                    ['club_pase_id' => $clubId],
-                ]);
-                if ($catId) {
-                    $q->andWhere(['categoria_id' => $catId]);
-                }
-                foreach ($q->orderBy('nombre')->all() as $jugador) {
-                    $candidatos[] = ['jugador' => $jugador, 'remera' => null];
-                }
-            }
-
-            foreach ($candidatos as $c) {
-                $jugador = $c['jugador'];
-
-                if ($jugador->suspendido) {
-                    $omitidos++;
-                    continue;
-                }
-
-                $existe = ListaJugadores::find()->where([
-                    'partido_id' => $partido_id,
-                    'club_id'    => $clubId,
-                    'jugador_id' => $jugador->id,
-                ])->exists();
-
-                if (!$existe) {
-                    $entry              = new ListaJugadores();
-                    $entry->tipo_lista  = ListaJugadores::TIPO_PARTIDO;
-                    $entry->partido_id  = $partido_id;
-                    $entry->club_id     = $clubId;
-                    $entry->jugador_id  = $jugador->id;
-                    $entry->remera      = $c['remera'];
-                    $entry->save(false);
-                    $insertados++;
-                }
-            }
-        }
+        [$insertados, $omitidos] = ListaJugadores::poblarPartido($partido);
 
         $mensaje = "Se cargaron {$insertados} jugadores automáticamente.";
         if ($omitidos > 0) {

@@ -118,4 +118,133 @@ class ListaJugadores extends \yii\db\ActiveRecord
     {
         return $this->hasOne(User::class, ['id' => 'created_by']);
     }
+
+    /**
+     * Carga la lista de ambos clubes de un partido. Omite los que ya estén cargados.
+     *
+     * Por cada club, el origen de los jugadores es (en orden de prioridad):
+     *  1. La última lista de ese club en un partido de la misma categoría — jugador
+     *     y remera incluidos, aunque sean de otra categoría (ej. un reserva en primera).
+     *  2. El plantel maestro (Buena Fe), si la categoría tiene permite_bf=1.
+     *  3. Todos los jugadores del club en la categoría del partido.
+     * En todos los casos se re-valida la elegibilidad vigente (pases) y se omiten suspendidos.
+     *
+     * @return array [insertados, omitidos por suspensión]
+     */
+    public static function poblarPartido(Partidos $partido): array
+    {
+        $categoria = Categoria::find()->where(['nombre' => $partido->categoria])->one();
+        $catId     = $categoria ? $categoria->id : null;
+
+        $insertados = 0;
+        $omitidos   = 0;
+
+        foreach ([$partido->club_local_id, $partido->club_visitante_id] as $clubId) {
+            $candidatos = self::candidatosUltimaLista($partido, $clubId);
+
+            if (empty($candidatos) && $categoria && $categoria->permite_bf) {
+                $plantel = self::find()
+                    ->with('jugador')
+                    ->where(['tipo_lista' => self::TIPO_BUENA_FE, 'club_id' => $clubId])
+                    ->all();
+
+                foreach ($plantel as $entryPlantel) {
+                    $jugador = $entryPlantel->jugador;
+                    if (!$jugador || !self::esElegible($jugador, $clubId)) {
+                        continue;
+                    }
+                    if ($catId && $jugador->categoria_id != $catId) {
+                        continue;
+                    }
+                    $candidatos[] = ['jugador' => $jugador, 'remera' => $entryPlantel->remera];
+                }
+            }
+
+            // Fallback: sin lista previa ni plantel para esta categoría
+            if (empty($candidatos)) {
+                $q = Jugador::find()->where([
+                    'or',
+                    ['and', ['club_id' => $clubId], ['club_pase_id' => null]],
+                    ['club_pase_id' => $clubId],
+                ]);
+                if ($catId) {
+                    $q->andWhere(['categoria_id' => $catId]);
+                }
+                foreach ($q->orderBy('nombre')->all() as $jugador) {
+                    $candidatos[] = ['jugador' => $jugador, 'remera' => null];
+                }
+            }
+
+            foreach ($candidatos as $c) {
+                $jugador = $c['jugador'];
+
+                if ($jugador->suspendido) {
+                    $omitidos++;
+                    continue;
+                }
+
+                $existe = self::find()->where([
+                    'partido_id' => $partido->id,
+                    'club_id'    => $clubId,
+                    'jugador_id' => $jugador->id,
+                ])->exists();
+
+                if (!$existe) {
+                    $entry              = new self();
+                    $entry->tipo_lista  = self::TIPO_PARTIDO;
+                    $entry->partido_id  = $partido->id;
+                    $entry->club_id     = $clubId;
+                    $entry->jugador_id  = $jugador->id;
+                    $entry->remera      = $c['remera'];
+                    $entry->save(false);
+                    $insertados++;
+                }
+            }
+        }
+
+        return [$insertados, $omitidos];
+    }
+
+    /** Jugadores (con remera) de la última lista del club en otro partido de la misma categoría. */
+    private static function candidatosUltimaLista(Partidos $partido, $clubId): array
+    {
+        $ultimoPartidoId = self::find()
+            ->select('lista_jugadores.partido_id')
+            ->innerJoin('partidos', 'partidos.id = lista_jugadores.partido_id')
+            ->where([
+                'lista_jugadores.tipo_lista' => self::TIPO_PARTIDO,
+                'lista_jugadores.club_id'    => $clubId,
+                'partidos.categoria'         => $partido->categoria,
+            ])
+            ->andWhere(['<>', 'lista_jugadores.partido_id', $partido->id])
+            ->orderBy(['lista_jugadores.partido_id' => SORT_DESC])
+            ->limit(1)
+            ->scalar();
+
+        if (!$ultimoPartidoId) {
+            return [];
+        }
+
+        $entries = self::find()
+            ->with('jugador')
+            ->where(['partido_id' => $ultimoPartidoId, 'club_id' => $clubId])
+            ->orderBy(['remera' => SORT_ASC])
+            ->all();
+
+        $candidatos = [];
+        foreach ($entries as $e) {
+            // Sin filtro de categoría: la lista previa puede mezclar categorías a propósito
+            if ($e->jugador && self::esElegible($e->jugador, $clubId)) {
+                $candidatos[] = ['jugador' => $e->jugador, 'remera' => $e->remera];
+            }
+        }
+        return $candidatos;
+    }
+
+    /** El jugador juega para el club: propio sin pase a otro, o con pase hacia este. */
+    private static function esElegible(Jugador $jugador, $clubId): bool
+    {
+        return ($jugador->club_id == $clubId && $jugador->club_pase_id === null)
+            || $jugador->club_pase_id == $clubId;
+    }
 }

@@ -29,5 +29,11 @@
 -puntos 3 ganado 1empatado 0 perdido-libre
 -verificar ffrontend
 -ver fficture
-
-
+--------------------------------------------
+-fijar listas al crear partido
+-verificar correo
+-crear usuarios por club para ver carnet
+-ver error en cargar juagador a lista de jugadores(creo que es error de claves)
+-habilitar buscar por carnet y por estado ...
+-camisetas.. poner hasta la 100
+-marcar en tabla de pocisiones las primeras ocho pocisiones.
