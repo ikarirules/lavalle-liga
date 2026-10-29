@@ -48,7 +48,7 @@ class ListaJugadores extends \yii\db\ActiveRecord
             [['club_id', 'jugador_id'], 'required'],
             [['partido_id', 'club_id', 'jugador_id', 'remera',
               'created_by', 'updated_by', 'created_at', 'updated_at'], 'integer'],
-            [['remera'], 'integer', 'min' => 1, 'max' => 22],
+            [['remera'], 'integer', 'min' => 1, 'max' => 99],
             ['tipo_lista', 'in', 'range' => array_keys(self::optsTipoLista())],
             ['partido_id', 'required', 'when' => fn($m) => $m->tipo_lista === self::TIPO_PARTIDO],
             ['partido_id', 'exist', 'skipOnEmpty' => true,
@@ -90,7 +90,7 @@ class ListaJugadores extends \yii\db\ActiveRecord
     public static function optsRemera(): array
     {
         $opts = ['' => '—'];
-        for ($i = 1; $i <= 22; $i++) {
+        for ($i = 1; $i <= 99; $i++) {
             $opts[$i] = (string) $i;
         }
         return $opts;
