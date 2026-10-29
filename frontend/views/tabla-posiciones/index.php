@@ -24,11 +24,10 @@ $this->params['breadcrumbs'][] = $this->title;
 .tabla-posiciones tbody tr:hover { background:#2f3237; }
 .tabla-posiciones .club-pos { width:2.2rem; color:#6c757d; }
 .tabla-posiciones .club-pts { font-weight:700; color:#00f5ff; }
-/* Primeros 8 puestos (clasifican) */
-.tabla-posiciones tr.clasifica td { background-color:rgba(57,255,20,.08); }
-.tabla-posiciones tr.clasifica td.club-pos { color:#39ff14; font-weight:700; box-shadow:inset 3px 0 0 #39ff14; }
-.leyenda-clasifica { display:inline-block; width:.8rem; height:.8rem; vertical-align:middle;
-    background:rgba(57,255,20,.25); border-left:3px solid #39ff14; }
+/* Primeros 8 puestos (clasifican): solo el texto, sin tocar fondo ni bordes */
+.tabla-posiciones tr.clasifica td { color:#a8ffb0; }
+.tabla-posiciones tr.clasifica td.club-pos { font-weight:700; }
+.leyenda-clasifica { color:#a8ffb0; font-weight:700; }
 </style>
 
 <div class="tabla-posiciones-index pt-2">
@@ -107,7 +106,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <strong>GC</strong> Goles en Contra &nbsp;·&nbsp;
             <strong>DG</strong> Diferencia de Goles &nbsp;·&nbsp;
             <strong>Pts</strong> Puntos &nbsp;·&nbsp;
-            <span class="leyenda-clasifica"></span> Primeros 8 puestos
+            <span class="leyenda-clasifica">Verde</span> Primeros 8 puestos
         </div>
     <?php endif; ?>
 
