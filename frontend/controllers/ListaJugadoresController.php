@@ -208,9 +208,20 @@ class ListaJugadoresController extends Controller
 
         $clubId = $lado === 'visitante' ? $partido->club_visitante_id : $partido->club_local_id;
 
+        // No ofrecer los que ya están en la lista de este partido
+        $yaEnLista = ListaJugadores::find()
+            ->select('jugador_id')
+            ->where(['partido_id' => $partido->id, 'club_id' => $clubId])
+            ->column();
+
+        $jugadores = array_values(array_filter(
+            $this->buildJugadoresList($clubId),
+            fn($j) => !in_array($j['id'], $yaEnLista)
+        ));
+
         return [
             'club_id'   => $clubId,
-            'jugadores' => $this->buildJugadoresList($clubId),
+            'jugadores' => $jugadores,
         ];
     }
 

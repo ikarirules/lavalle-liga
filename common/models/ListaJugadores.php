@@ -55,6 +55,10 @@ class ListaJugadores extends \yii\db\ActiveRecord
              'targetClass' => Partidos::class, 'targetAttribute' => ['partido_id' => 'id']],
             ['club_id',    'exist', 'targetClass' => Club::class,    'targetAttribute' => ['club_id'    => 'id']],
             ['jugador_id', 'exist', 'targetClass' => Jugador::class, 'targetAttribute' => ['jugador_id' => 'id']],
+            // Espeja el índice uq_lista_partido_club_jugador para avisar en el form en vez de tirar IntegrityException
+            ['jugador_id', 'unique', 'targetAttribute' => ['partido_id', 'club_id', 'jugador_id'],
+             'when' => fn($m) => $m->tipo_lista === self::TIPO_PARTIDO,
+             'message' => 'Ese jugador ya está en la lista de este partido.'],
         ];
     }
 
